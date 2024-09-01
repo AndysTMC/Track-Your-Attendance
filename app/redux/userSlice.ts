@@ -1,0 +1,102 @@
+// /redux/userSlice.ts
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
+import { UserData } from '@/app/utils/hybrid'
+import { generateChecksum } from '@/app/utils/hybrid'
+
+interface UserState {
+  inQueue: number;
+  userData: UserData | null;
+  error: string | null;
+  errorStatusCode: number | null;
+  fetchInProgress: boolean;
+}
+
+const initialState: UserState = {
+  inQueue: -1,
+  userData: null,
+  error: null,
+  errorStatusCode: null,
+  fetchInProgress: false,
+};
+
+export const scrape = createAsyncThunk(
+  '',
+  async ({ regNo, password, dKey, refetch }: { regNo: string | null, password: string | null, dKey: string | null, refetch: boolean }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post('/api/scrape', { regNo, password, dKey, refetch }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return { ...response.data, status: response.status };
+    } catch (error: any) {
+      return rejectWithValue({ error: error.response.data.error, status: error.response.status });
+    }
+  }
+);
+
+const clearLocalStorageData = () => {
+  localStorage.removeItem('TYASRMAPUDATA');
+  localStorage.removeItem('TYASRMAPREGNO');
+  localStorage.removeItem('TYASRMAPDKEY');
+}
+
+const userSlice = createSlice({
+  name: 'user',
+  initialState,
+  reducers: {
+    exit: (state) => {
+      state.userData = null;
+      state.inQueue = -1;
+      state.error = null;
+      clearLocalStorageData();
+    },
+    clearError: (state) => {
+      state.error = null;
+      state.errorStatusCode = null;
+    },
+    setUserData: (state, action) => {
+      state.userData = action.payload;
+    },
+    setInQueueINF: (state) => {
+      state.inQueue = Infinity;
+    },
+    setFetchInProgress: (state, action) => {
+      state.fetchInProgress = action.payload;
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(scrape.fulfilled, (state, action) => {
+        if (action.payload.error) {
+          state.error = action.payload.error;
+          state.errorStatusCode = action.payload.status;
+          state.inQueue = 0;
+          state.fetchInProgress = action.payload.inProgress
+        } else if (action.payload.inQueue != null) {
+          state.inQueue = action.payload.inQueue;
+        } else if (action.payload.userData) {
+          state.fetchInProgress = false;
+          state.userData = action.payload.userData;
+          localStorage.setItem('TYASRMAPUDATA', JSON.stringify(action.payload.userData));
+          state.error = null;
+          state.errorStatusCode = null;
+          state.inQueue = 0;
+        } else if (action.payload.dKey != null) {
+          localStorage.setItem('TYASRMAPDKEY', action.payload.dKey);
+          localStorage.setItem('TYASRMAPREGNO', action.payload.regNo);
+          state.error = null;
+          state.errorStatusCode = null;
+        }
+      })
+      .addCase(scrape.rejected, (state, action) => {
+        state.error = (action.payload as { error: string }).error;
+        state.errorStatusCode = (action.payload as { status: number }).status;
+        state.inQueue = 0;
+      });
+  },
+});
+
+export const { exit, setUserData, setInQueueINF, setFetchInProgress, clearError } = userSlice.actions;
+export default userSlice.reducer;
