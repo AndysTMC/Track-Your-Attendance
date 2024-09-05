@@ -3,9 +3,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { Course, Session, Timetable } from "../utils/hybrid";
 import { FTime, FSession, FSMethods, getLiveTime, getSessionIndex, getCurrentDayOfWeek, getSessionDetails, DayOfWeek, getPrettierSessions } from "../utils/frontend";
-import useEverySecond from "../hooks/EverySecond";
-import useEveryMinute from "../hooks/EveryMinute";
 import CopyPaste from "./CopyPaste";
+import useEveryTime from "../hooks/EveryTime";
 
 export default function Sessions() {
     const { inQueue, userData, error } = useSelector((state: RootState) => state.user)
@@ -22,7 +21,7 @@ export default function Sessions() {
             setCurTime(liveTime.toJSON());
         }, 1000);
         return () => { clearInterval(interval); };
-    }, [curTime]);
+    }, [curTime, curFTime]);
     const getNoSessionsMessage = (): string => {
         if (userData === null) return 'No data available';
         const todaySessions = userData.timetable[getCurrentDayOfWeek()];
@@ -55,11 +54,11 @@ export default function Sessions() {
             setSessionDetails(sd);
         }
     }
-    const { setActive } = useEverySecond(updateSessionIndices)
+    const { setActive:setSecondActive } = useEveryTime(updateSessionIndices)
+    const { setActive:setMinuteActive } = useEveryTime(updateSessionDetails, 60000)
     useEffect(() => {
-        return () => { setActive(false) }
-    }, [])
-    const minuteHandler = useEveryMinute(updateSessionDetails)
+        return () => { setSecondActive(false), setMinuteActive(false) }
+    }, [setSecondActive, setMinuteActive])
     useEffect(updateSessionIndices, [sessionDetails, userData]);
     useEffect(updateSessionDetails, [onGoingSessionIndex, upcomingSessionIndex, sessionMode, userData]);
     useEffect(() => {

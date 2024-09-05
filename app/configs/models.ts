@@ -93,7 +93,6 @@ const SystemStateSchema = new Schema({
     failedAuths: { type: Map, of: String, default: {} },
     portalErrors: { type: Map, of: String, default: {} },
     failedScrapes: { type: Map, of: String, default: {} },
-    errorAtBackend: { type: Boolean, default: false },
     inMaintenance: { type: Boolean, default: false },
     semStartDate: { type: String, default: '' },
     semEndDate: { type: String, default: '' },

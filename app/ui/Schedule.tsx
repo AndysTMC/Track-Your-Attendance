@@ -5,13 +5,13 @@ import { MdSwipeLeft } from "react-icons/md";
 import { FaCircleChevronRight } from "react-icons/fa6";
 import { FaCircleChevronLeft } from "react-icons/fa6";
 import { getCurrentDayIndex, days, DayOfWeek, getSessionDetails, FSession, getPrettierSchedule } from '../utils/frontend';
-import useEveryDay from '../hooks/EveryDay';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import { Timetable, Session } from '../utils/hybrid';
 import ScheduleSCard from './ScheduleSCard';
 import { FSMethods } from '../utils/frontend';
 import CopyPaste from './CopyPaste';
+import useEveryTime from '../hooks/EveryTime';
 
 
 export default function Schedule() {
@@ -29,7 +29,7 @@ export default function Schedule() {
         trackTouch: true,
         trackMouse: true,
     });
-    const dayHandler = useEveryDay(() => setTodayIndex(getCurrentDayIndex))
+    const { setActive } = useEveryTime(() => setTodayIndex(getCurrentDayIndex), 86400000)
     useEffect(() => {
         if (!userData) return;
         const dayName: DayOfWeek = days[dayIndex] as DayOfWeek;

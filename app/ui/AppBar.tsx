@@ -6,8 +6,8 @@ import { GrDocumentUpdate } from "react-icons/gr";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../redux/store";
 import { scrape, exit, setInQueueINF, setFetchInProgress } from "../redux/userSlice";
-import useEverySecond from "../hooks/EverySecond";
-
+import useEveryTime from "@/app/hooks/EveryTime";
+import Image from 'next/image';
 
 
 export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim: boolean, setBackgroundDim: (dim: boolean) => void}) {
@@ -27,22 +27,23 @@ export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim
     const refetchUserData = async () => {
         const regNo = localStorage.getItem('TYASRMAPREGNO') ?? null;
         const dKey = localStorage.getItem('TYASRMAPDKEY') ?? null;
-        dispatch(scrape({ regNo, password: null, dKey, refetch: false }));
         if (fetchInProgress == false) {
             setRefetchMode(false);
+        } else {
+            dispatch(scrape({ regNo, password: null, dKey, refetch: false }));
         }
     }
-    const { setActive: setRefetching } = useEverySecond(refetchUserData);
+    const { setActive: setRefetching } = useEveryTime(refetchUserData, 3000);
     useEffect(() => {
-        if (errorStatusCode == 400 || errorStatusCode == 401) {
+        if (errorStatusCode != null && [400, 401, 503].includes(errorStatusCode)) {
             dispatch(exit());
         }
-        if (errorStatusCode == 403 || errorStatusCode == 500) {
+        if (errorStatusCode && [200, 500].includes(errorStatusCode)) {
             setRefetchMode(false);
         }
         if (refetchMode) { setRefetching(true); }
         if (!refetchMode) { setRefetching(false); }
-    }, [dispatch, refetchMode, fetchInProgress, errorStatusCode]);
+    }, [dispatch, refetchMode, fetchInProgress, errorStatusCode, setRefetching]);
     return (
         <div className="fixed w-full h-auto bottom-0 flex flex-col items-center">
             <div className={`
@@ -62,7 +63,7 @@ export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim
                                 w-48 h-48 bsm:w-52 bsm:h-52
                                 my-12 bsm:my-20 transition-all duration-500
                             `}>
-                                <img src="/LTSQR.png" alt="QR" className="w-full h-full" />
+                                <Image src="/LTSQR.png" alt="QR" fill={false} layout="responsive" width={200} height={200} />
                             </div>
                         ) : null
                     }

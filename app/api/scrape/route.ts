@@ -1,5 +1,5 @@
 import { getPortal, scrape } from '@/app/utils/portal';
-import { BACKEND_CHECK_C, CANT_FETCH_C, CANT_REFETCH_C, COOLDOWN_CHECK_C, Credentials, CREDENTIALS_CHECK_C, DATA_NA_WITH_REGNO, DKEY_CHECK_C, DKEY_NOT_PROVIDED_C, ERROR_AT_BACKEND_C, FAILED_AUTH_CHECK_C, FAILED_DECRYPT_C, FAILED_SCRAPE_CHECK_C, FAILED_TO_FETCH_DATA, generateDKey, handleScrapeErrors, IN_MAINTENANCE_C, INVALID_AUTH_CHECK_C, INVALID_CREDENTIALS, NA_C, NEITHER_PASSWORD_NOR_DKEY_PROVIDED, PLEASE_TRY_AGAIN, PLEASE_TRY_AGAIN_LATER, Portal, PORTAL_ERROR_CHECK_C, QueueItem, REFETCH_LIMIT_REACHED_C, REFETCH_POSSIBLITY_CHECK_C, REGNO_CHECK_C, REGNO_DATA_CHECK_C, REGNO_IN_QUEUE_CHECK_C, REGNO_NOT_PROVIDED_C, SCRAPE_IN_PROGRESS_CHECK_C, ScrapeData, SERVER_CHECK_C, SERVER_IN_MAINTENANCE_C, TIME_LIMIT_NOT_REACHED_C, User } from '@/app/utils/backend';
+import { BACKEND_CHECK_C, CANT_FETCH_C, CANT_REFETCH_C, COOLDOWN_CHECK_C, Credentials, CREDENTIALS_CHECK_C, DATA_NA_WITH_REGNO, DKEY_CHECK_C, DKEY_NOT_PROVIDED_C, ERROR_AT_BACKEND_C, FAILED_AUTH_C, FAILED_AUTH_CHECK_C, FAILED_DECRYPT_C, FAILED_SCRAPE_C, FAILED_SCRAPE_CHECK_C, FAILED_TO_FETCH_DATA, generateDKey, handleScrapeErrors, IN_MAINTENANCE_C, INVALID_AUTH_C, INVALID_AUTH_CHECK_C, INVALID_CREDENTIALS, NA_C, NEITHER_PASSWORD_NOR_DKEY_PROVIDED, PLEASE_TRY_AGAIN, PLEASE_TRY_AGAIN_LATER, Portal, PORTAL_ERROR_C, PORTAL_ERROR_CHECK_C, QueueItem, REFETCH_LIMIT_REACHED_C, REFETCH_POSSIBLITY_CHECK_C, REGNO_CHECK_C, REGNO_DATA_CHECK_C, REGNO_IN_QUEUE_CHECK_C, REGNO_NOT_PROVIDED_C, SCRAPE_IN_PROGRESS_CHECK_C, ScrapeData, SERVER_CHECK_C, SERVER_IN_MAINTENANCE_C, TIME_LIMIT_NOT_REACHED_C, User } from '@/app/utils/backend';
 import { UserData } from '@/app/utils/hybrid'
 import { Queue } from '@/app/utils/backend';
 import OPS from '@/app/utils/db_ops';
@@ -39,22 +39,25 @@ async function executeScrape(item: QueueItem) {
       try {
         data = await scrape(regNo, decryptedPassword, item.portal);
       } catch (err: any) {
-        handleScrapeErrors(err, item.credentials.regNo, decryptedPassword);
-        if (await OPS.hasInvalidAuth(regNo)) {
+        await handleScrapeErrors(err, item.credentials.regNo, decryptedPassword);
+        if (await OPS.hasInvalidAuth(regNo, decryptedPassword)) {
           await OPS.updateUserScrapeProgress(regNo, false);
           return;
         }
       }
       count++;
     }
+    // console.log(data);
     if (!data) { OPS.updateUserScrapeProgress(regNo, false); return; }
     try {
       if (await OPS.hasUser(item.credentials.regNo)) {
         const user = await OPS.getUser(item.credentials.regNo);
         if (!user) { return; }
         const scrapingInfo = user.userData.scrapingInfo;
+        const previoslyScraped = new Date(scrapingInfo.lastScraped);
         scrapingInfo.lastScraped = new Date().toISOString();
         if (item.refetch) scrapingInfo.refetchCount++;
+        if (previoslyScraped.getDate() !== new Date().getDate()) scrapingInfo.refetchCount = 0;
         user.userData = { ...data, scrapingInfo };
         await OPS.addOrUpdateUser(item.credentials.regNo, user);
         await OPS.updateUserScrapeProgress(regNo, false);
@@ -63,10 +66,9 @@ async function executeScrape(item: QueueItem) {
         const userData: UserData = { ...data, scrapingInfo };
         const user: User = { userData, userCredentials: item.credentials, scrapeInProgress: false };
         await OPS.addOrUpdateUser(item.credentials.regNo, user);
+        console.info("User added to database");
       }
-    } catch (err: any) {
-      OPS.setErrorAtBackend(true);
-    }
+    } catch (err: any) { }
   } catch (err: any) {
     handleScrapeErrors(err, item.credentials.regNo, decryptedPassword);
   }
@@ -198,18 +200,11 @@ export async function POST(request: Request): Promise<void | Response> {
   let { regNo, password, dKey, refetch }:
     { regNo: string, password: string, dKey: string, refetch: boolean } = await request.json();
   try {
-    if (await OPS.hasErrorAtBackend()) { throw new Error([ERROR_AT_BACKEND_C, BACKEND_CHECK_C, NA_C].join(':::')) }
-    
     if (await OPS.isInMaintenance()) { throw new Error([IN_MAINTENANCE_C, SERVER_CHECK_C, SERVER_IN_MAINTENANCE_C].join(':::')) }
-    
     if (!regNo) { throw new Error([CANT_FETCH_C, REGNO_CHECK_C, REGNO_NOT_PROVIDED_C].join(':::')); }
-    
     if (queue.hasUser(regNo)) { throw new Error([CANT_FETCH_C, REGNO_IN_QUEUE_CHECK_C, NA_C].join(':::')); }
-    
     if (await OPS.getScrapeInProgress(regNo)) { throw new Error([CANT_FETCH_C, SCRAPE_IN_PROGRESS_CHECK_C, NA_C].join(':::')); }
-    
     if (password === null && dKey === null) { throw new Error([CANT_FETCH_C, CREDENTIALS_CHECK_C, NEITHER_PASSWORD_NOR_DKEY_PROVIDED].join(':::')); }
-
     if (refetch) {
       if (!dKey) { throw new Error([CANT_REFETCH_C, DKEY_CHECK_C, DKEY_NOT_PROVIDED_C].join(':::')); }
     }
@@ -230,35 +225,37 @@ export async function POST(request: Request): Promise<void | Response> {
         throw new Error([CANT_REFETCH_C, REFETCH_POSSIBLITY_CHECK_C, REFETCH_LIMIT_REACHED_C].join(':::')); 
       }
     }
-
-    if (await OPS.hasInvalidAuth(regNo)) { throw new Error([CANT_FETCH_C, INVALID_AUTH_CHECK_C, INVALID_CREDENTIALS].join(':::')); }
-    
-    if (await OPS.hasFailedAuth(regNo)) {
-      OPS.removeFailedAuth(regNo);
-      throw new Error([CANT_FETCH_C, FAILED_AUTH_CHECK_C, PLEASE_TRY_AGAIN].join(':::'));
-    }
-    
-    if (await OPS.hasFailedScrape(regNo)) {
-      OPS.removeFailedScrape(regNo);
-      throw new Error([CANT_FETCH_C, FAILED_SCRAPE_CHECK_C, FAILED_TO_FETCH_DATA].join(':::'));
-    }
-    
-    if (await OPS.hasPortalError(regNo)) { 
-      OPS.removePortalError(regNo);
-      throw new Error([CANT_FETCH_C, PORTAL_ERROR_CHECK_C, PLEASE_TRY_AGAIN_LATER].join(':::')); 
-    }
     let portal: Portal | null = null;
+    let errorType, errorLocation, errorMessage;
     try {
       portal = await getPortal(regNo, password);
     } catch (err: any) {
-      await handleScrapeErrors(err, regNo, password);
-      if (await OPS.hasInvalidAuth(regNo)) {
-        await OPS.removeInvalidAuth(regNo)
-        await OPS.updateUserScrapeProgress(regNo, false);
-        return unauthorizedResponse(INVALID_CREDENTIALS);
-      }
+      errorType = err.message.split(":::")[0];
+      errorLocation = err.message.split(":::")[1];
+      errorMessage = err.message.split(":::")[2];
     }
-    if (!await OPS.hasUser(regNo) || !await OPS.hasCoolDown(regNo) || refetch) {
+
+    if (await OPS.hasInvalidAuth(regNo, password) || errorType === INVALID_AUTH_C) { 
+      await OPS.removeInvalidAuth(regNo);
+      throw new Error([CANT_FETCH_C, INVALID_AUTH_CHECK_C, INVALID_CREDENTIALS].join(':::'));
+     }
+    
+    if (await OPS.hasFailedAuth(regNo) || errorType === FAILED_AUTH_C) {
+      await OPS.removeFailedAuth(regNo);
+      throw new Error([CANT_FETCH_C, FAILED_AUTH_CHECK_C, PLEASE_TRY_AGAIN].join(':::'));
+    }
+    
+    if (await OPS.hasFailedScrape(regNo) || errorType === FAILED_SCRAPE_C) {
+      await OPS.removeFailedScrape(regNo);
+      throw new Error([CANT_FETCH_C, FAILED_SCRAPE_CHECK_C, FAILED_TO_FETCH_DATA].join(':::'));
+    }
+    
+    if (await OPS.hasPortalError(regNo) || errorType === PORTAL_ERROR_C) { 
+      await OPS.removePortalError(regNo);
+      throw new Error([CANT_FETCH_C, PORTAL_ERROR_CHECK_C, PLEASE_TRY_AGAIN_LATER].join(':::')); 
+    }
+    
+    if (!(await OPS.hasUser(regNo)) || !(await OPS.hasCoolDown(regNo)) || refetch) {
       if (portal) enqueueHelper(regNo, encryptedPassword, dKey, refetch, portal);
     }
     if (await OPS.hasUser(regNo) && !(await OPS.getScrapeInProgress(regNo))) return dataResponse(regNo);

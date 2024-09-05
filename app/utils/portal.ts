@@ -1,13 +1,14 @@
 import * as https from 'https';
-import * as fs from 'fs';
-import { createWorker } from 'tesseract.js';
+import fs from 'fs';
+import axios from 'axios';
+import FormData from 'form-data';
 import * as cheerio from 'cheerio';
 import { Timetable, Course, Session, Profile, Timing, Attendance } from '@/app/utils/hybrid'
 import { 
     Portal, ScrapeData, JSESSIONID_CHECK_C, CAPTCHA_CHECK_C, CREDENTIALS_CHECK_C, NA_C, UNKNOWN_C, 
     FAILED_AUTH_C, INVALID_AUTH_C, FAILED_SCRAPE_C, PORTAL_ERROR_C, PROFILE_SCRAPE_C, TIMETABLE_SCRAPE_C, ATTENDANCE_SCRAPE_C,
 } from '@/app/utils/backend';
-import path from 'path';
+import OPS from './db_ops';
 
 const headersForFetchingJSESSIONID: Record<string, string> = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -100,9 +101,11 @@ const getCaptcha = async (JSESSIONID: string): Promise<string> => {
             ...optionsForFetchingCaptcha,
             headers: { ...headersForFetchingCaptcha, "cookie": `JSESSIONID=${JSESSIONID}` }
         };
-        // const tmpDir = '/tmp';
-        const tmpDir = '.'
-        const filePath = path.join(tmpDir, 'captcha.png');
+        let filePath = '';
+        
+        if (process.env.NODE_ENV == 'production') { filePath = '/tmp/captcha.png'} else
+        filePath = './captcha.png'
+
         await new Promise<void>((resolve, reject) => {
             https.get(options, (res) => {
                 const file = fs.createWriteStream(filePath);
@@ -112,14 +115,21 @@ const getCaptcha = async (JSESSIONID: string): Promise<string> => {
                 });
             }).on('error', reject);
         });
-        const worker = await createWorker("eng", 1, { workerPath: "./node_modules/tesseract.js/src/worker-script/node/index.js" });
-        const { data: { text } } = await worker.recognize(filePath);
-        await worker.terminate();
+        const formData = new FormData();
+        formData.append('file', fs.createReadStream(filePath));
+        const response = await axios.post("https://tya-text-extract.onrender.com/extract", formData, {
+            headers: {
+                "Content-Type": `multipart/form-data; boundary=${formData.getBoundary()}`
+            }
+        });
+        const text = response.data.captchaText;
+        if (text == null || text == undefined) throw new Error("Failed to extract text from captcha image");
         return text.trim();
     } catch (err: any) {
         throw new Error([FAILED_AUTH_C, CAPTCHA_CHECK_C, err.message].join(":::"));
     }
 };
+
 
 const authenticate = async (JSESSIONID: string, captcha: string, regNo: string, password: string): Promise<Portal> => {
     try {
@@ -265,14 +275,18 @@ const extractAttendancePage = async (portal: Portal, pageId: number): Promise<Ar
         throw new Error([FAILED_SCRAPE_C, ATTENDANCE_SCRAPE_C, err.message].join(":::"));
     }
 }
-const setTotalInAttendance = (
+const setTotalInAttendance = async (
     courseInfo: Array<Course>,
     timetableInfo: Timetable,
     attendanceInfo: Array<Attendance>
-): void => {
+): Promise<void> => {
     try {
-        const startDate: Date = new Date('2024-08-05');
-        const endDate: Date = new Date('2024-12-24'); 
+        const startDateString = await OPS.getSemStartDate();
+        const endDateString = await OPS.getSemEndDate();
+        console.log(startDateString, endDateString);
+        const startDate: Date = new Date(startDateString as string);
+        const endDate: Date = new Date(endDateString as string); 
+        console.log(startDate, endDate);
         const days: Array<string> = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const countWeekdayOccurrences = (startDate: Date, endDate: Date): Array<number> => {
             const dayCounts = new Array(7).fill(0);
@@ -313,7 +327,7 @@ export const scrape = async (regNo: string, password: string, portal: Portal): P
         const profile: Profile = await extractProfilePage(portal, 1);
         const { timetable, courses }: { timetable: Timetable, courses: Course[] } = await extractTimetablePage(portal, 10);
         const attendances: Attendance[] = await extractAttendancePage(portal, 3);
-        setTotalInAttendance(courses, timetable, attendances);
+        await setTotalInAttendance(courses, timetable, attendances);
         return { profile, timetable, attendances, courses } as ScrapeData;
     } catch (err) {
         throw err;

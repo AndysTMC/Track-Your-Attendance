@@ -10,6 +10,7 @@ interface UserState {
   error: string | null;
   errorStatusCode: number | null;
   fetchInProgress: boolean;
+  requestProcessing: boolean;
 }
 
 const initialState: UserState = {
@@ -18,6 +19,7 @@ const initialState: UserState = {
   error: null,
   errorStatusCode: null,
   fetchInProgress: false,
+  requestProcessing: false,
 };
 
 export const scrape = createAsyncThunk(
@@ -52,6 +54,9 @@ const userSlice = createSlice({
       state.error = null;
       clearLocalStorageData();
     },
+    setError: (state, action) => {
+      state.error = action.payload;
+    },
     clearError: (state) => {
       state.error = null;
       state.errorStatusCode = null;
@@ -64,11 +69,15 @@ const userSlice = createSlice({
     },
     setFetchInProgress: (state, action) => {
       state.fetchInProgress = action.payload;
+    },
+    setRequestProcessing: (state, action) => {
+      state.requestProcessing = action.payload;
     }
   },
   extraReducers: (builder) => {
     builder
       .addCase(scrape.fulfilled, (state, action) => {
+        state.requestProcessing = false;
         if (action.payload.error) {
           state.error = action.payload.error;
           state.errorStatusCode = action.payload.status;
@@ -91,12 +100,16 @@ const userSlice = createSlice({
         }
       })
       .addCase(scrape.rejected, (state, action) => {
+        state.requestProcessing = false;
         state.error = (action.payload as { error: string }).error;
         state.errorStatusCode = (action.payload as { status: number }).status;
         state.inQueue = 0;
+        localStorage.removeItem('TYASRMAPUDATA');
+        localStorage.removeItem('TYASRMAPREGNO');
+        localStorage.removeItem('TYASRMAPDKEY');
       });
   },
 });
 
-export const { exit, setUserData, setInQueueINF, setFetchInProgress, clearError } = userSlice.actions;
+export const { exit, setUserData, setInQueueINF, setFetchInProgress, clearError, setError, setRequestProcessing } = userSlice.actions;
 export default userSlice.reducer;

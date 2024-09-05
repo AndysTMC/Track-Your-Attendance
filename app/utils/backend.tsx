@@ -124,7 +124,6 @@ export type OtherData = {
     failedAuths: SSMap;
     failedScrapes: SSMap;
     portalErrors: SSMap;
-    errorAtBackend: boolean;
     inMaintenance: boolean;
     semStartDate: string;
     semEndDate: string;

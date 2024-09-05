@@ -3,19 +3,20 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../redux/store';
 import AppBar from './AppBar';
-import { scrape } from '../redux/userSlice';
+import { clearError, scrape } from '../redux/userSlice';
 import Identity from './Identity';
 import Sessions from './Sessions';
 import Schedule from './Schedule';
 import CoursesOverview from './CoursesOverview';
 import AttendanceStats from './AttendanceStats';
+import Snackbar from '@mui/material/Snackbar';
 
 
 export default function Display() {
     const dispatch = useDispatch<AppDispatch>();
-    const { inQueue, userData, error } = useSelector((state: RootState) => state.user);
+    const { inQueue, userData, error, errorStatusCode } = useSelector((state: RootState) => state.user);
     const [backgroundDim, setBackgroundDim] = useState(false);
-    
+    const handleClose = () => dispatch(clearError());
     return (
         <div className={`
             w-full h-full 
@@ -48,6 +49,14 @@ export default function Display() {
                 <div className="w-auto h-16"></div>
             </div>
             <AppBar backgroundDim={backgroundDim} setBackgroundDim={setBackgroundDim} />
+            <Snackbar
+                open={error != null}
+                autoHideDuration={5000}
+                onClose={handleClose}
+                message={error}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                color='white'
+                />
         </div>
     )
 }

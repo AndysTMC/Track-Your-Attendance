@@ -4,15 +4,16 @@ import { teko } from '../fonts';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState, AppDispatch } from '../redux/store';
-import { clearError, scrape, setFetchInProgress, setInQueueINF, setUserData } from '../redux/userSlice';
+import { clearError, scrape, setError, setFetchInProgress, setInQueueINF, setRequestProcessing, setUserData } from '../redux/userSlice';
 import { BsFillPeopleFill } from "react-icons/bs";
 import { UserData, generateChecksum } from '@/app/utils/hybrid';
 import axios from 'axios';
 import { FaCircleCheck } from "react-icons/fa6";
-import useEverySecond from '../hooks/EverySecond';
 import Snackbar from '@mui/material/Snackbar';
 import AdminArea from './AdminArea';
 import { setNavigateToAdminControl } from '../redux/adminSlice';
+import DownloadApp from './DownloadApp';
+import useEveryTime from '../hooks/EveryTime';
 
 const getUserDataLocal = async (): Promise<UserData | null> => {
     try {
@@ -44,7 +45,7 @@ const necessaryDataExists = (): boolean => {
 export default function Collect() {
     const dispatch = useDispatch<AppDispatch>();
     const router = useRouter();
-    const { inQueue, userData, error, errorStatusCode, fetchInProgress } = useSelector((state: RootState) => state.user);
+    const { inQueue, userData, error, errorStatusCode, fetchInProgress, requestProcessing } = useSelector((state: RootState) => state.user);
     const { adminError, adminErrorStatusCode, navigateToAdminControl } = useSelector((state: RootState) => state.admin);
     const [regNo, setRegNo] = useState('');
     const [password, setPassword] = useState('');
@@ -52,19 +53,23 @@ export default function Collect() {
     const handleClose = () => dispatch(clearError());
     const fetchUserData = async () => {
         let dKey = localStorage.getItem('TYASRMAPDKEY') ?? null;
-        if (dKey == null || errorStatusCode == 200) {
-            await dispatch(scrape({ regNo, password, dKey: null, refetch: false }));
-        } else {
-            await dispatch(scrape({ regNo, password: null, dKey, refetch: false }));
+        if (userData || (errorStatusCode && [400, 401, 500, 503].includes(errorStatusCode))) { setMode('normal') }
+        else {
+            if (requestProcessing) { return; }
+            dispatch(setRequestProcessing(true));
+            if (dKey == null || errorStatusCode == 200) {
+                dispatch(scrape({ regNo, password, dKey: null, refetch: false }));
+            } else {
+                dispatch(scrape({ regNo, password: null, dKey, refetch: false }));
+            }
         }
-        if (userData || errorStatusCode == 401) { setMode('normal') }
     }
-    const { setActive: setFetching } = useEverySecond(fetchUserData);
+    const { setActive: setFetching } = useEveryTime(fetchUserData, 1000);
     useEffect(() => {
         if (navigateToAdminControl && mode == 'normal') {
             router.replace('/admin');
         }
-    }, [navigateToAdminControl, router]);
+    }, [navigateToAdminControl, router, mode]);
     useEffect(() => {
         if (mode == 'normal') { setFetching(false); }
         if (mode == 'fetch') { 
@@ -85,7 +90,7 @@ export default function Collect() {
             };
             verifyUserData();
         }
-    }, [mode, userData, error]);
+    }, [dispatch, mode, userData, error, setFetching]);
 
     const validateUsername = (username: string): boolean => {
         if (username.length < 12) throw new Error('Registration Number is too short');
@@ -100,8 +105,13 @@ export default function Collect() {
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-        validateUsername(regNo);
-        validatePassword(password);
+        try {
+            validateUsername(regNo);
+            validatePassword(password);
+        } catch (err: any) {
+            dispatch(setError(err.message));
+            return;
+        }
         dispatch(setInQueueINF());
         dispatch(setFetchInProgress(true));
         setMode('fetch');
@@ -117,6 +127,7 @@ export default function Collect() {
                         select-none
                 `}
             >
+                { mode != 'verify' ? <DownloadApp /> : null}
                 <div className="w-full flex items-center justify-center p-4">
                     <h1 className={`
                         w-full text-center text-white
@@ -124,7 +135,7 @@ export default function Collect() {
                         ${teko.className}
                     `}>TYA-SRMAP</h1>
                 </div>
-                {mode == 'normal' ? <AdminArea /> : null }
+                
                 <hr className="w-11/12 border-gray-300 dark:border-gray-700" />
                 {mode == 'normal' ?
                     <form onSubmit={(e) => handleSubmit(e)} className="w-full px-8 bsm:px-14 md:px-20 py-3 flex flex-col items-center gap-y-5">
@@ -211,13 +222,14 @@ export default function Collect() {
                 }
             </div>
             <Snackbar
-                open={error != null && errorStatusCode == 401}
+                open={error != null && (errorStatusCode != null && [400, 401, 500, 503].includes(errorStatusCode))}
                 autoHideDuration={5000}
                 onClose={handleClose}
                 message={error}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
                 color='white'
                 />
+            {mode == 'normal' ? <AdminArea /> : null }
         </div>
     )
 }

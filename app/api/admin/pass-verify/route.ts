@@ -8,11 +8,11 @@ export async function POST(request: Request) {
     if (passProvided === adminPass) {
         const adminKey = generateAdminKey();
         OPS.setAdminKey(adminKey);
-        return new Response(JSON.stringify({message: "Admin verified"}), {
+        const responseHeaders = new Headers();
+        responseHeaders.append('Set-Cookie', `adminKey=${adminKey}; Path=/; HttpOnly; Max-Age=3600; SameSite=Strict;`);
+        return new Response(JSON.stringify({ message: "Admin verified" }), {
             status: 200,
-            headers: {
-                'Set-Cookie': `adminKey=${adminKey}; Path=/admin; HttpOnly; Max-Age=3600; SameSite=Strict;`,
-            },
+            headers: responseHeaders,
         });
     } 
     return new Response('Invalid admin pass', { status: 401 });

@@ -1,4 +1,5 @@
 import { Attendance, Course, Profile, Session } from '@/app/utils/hybrid';
+import dayjs from 'dayjs';
 
 export class FTime {
     private hours: number;
@@ -202,3 +203,15 @@ export const getPrettierAttendanceStats = (attendances: Array<Attendance>): stri
     }
     return result;
 }
+
+export type FHoliday = {
+    date: dayjs.Dayjs;
+    name: string;
+}
+
+export type FProperties = {
+    semStartDate: string;
+    semEndDate: string;
+    inMaintenance: boolean;
+}
+

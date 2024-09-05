@@ -16,11 +16,9 @@ export default function CopyPaste({data}: {data: string}) {
             if (successful) {
                 setCopied(true);
             } else {
-                console.error("Fallback: Unable to copy");
                 setCopied(false);
             }
         } catch (err) {
-            console.error("Fallback: Oops, unable to copy", err);
             setCopied(false);
         }
         document.body.removeChild(textarea);

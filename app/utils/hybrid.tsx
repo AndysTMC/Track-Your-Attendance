@@ -90,3 +90,12 @@ export type SpecialWorkingDay = {
     replacementDay: string;
 }
 
+
+export type AdminData = {
+    holidays: Holiday[];
+    specialWorkingDays: SpecialWorkingDay[];
+    errorAtBackend: boolean;
+    inMaintenance: boolean;
+    semStartDate: string;
+    semEndDate: string;
+}

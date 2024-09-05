@@ -1,7 +1,7 @@
-"use server"
+
 import { connectDB, isConnectionOpen } from '@/app/configs/db';
 import { UserModel, HolidayModel, SpecialWorkingDayModel, SystemStateModel } from '@/app/configs/models';
-import { Holiday, SpecialWorkingDay, UserData } from '../utils/hybrid';
+import { Holiday, SpecialWorkingDay, UserData, AdminData } from '../utils/hybrid';
 import { generateAdminKey, OtherData, SSMap, User } from '../utils/backend';
 import { get } from 'http';
 
@@ -18,6 +18,7 @@ const addIfNoSystemState = async () => {
 addIfNoSystemState();
 
 class OPS {
+    
     static async addOrUpdateUser(regNo: string, user: User): Promise<void> {
         await connectDB();
         const cuser = await UserModel.updateOne(
@@ -165,7 +166,7 @@ class OPS {
         await SystemStateModel.updateOne({}, { $set: { semStartDate: date } });
     }
 
-    static async getSemStartDate(): Promise<String> {
+    static async getSemStartDate(): Promise<string> {
         await connectDB();
         const doc = await SystemStateModel.findOne({});
         return doc.semStartDate;
@@ -225,10 +226,10 @@ class OPS {
         await SystemStateModel.updateOne({}, { $set: { [`invalidAuths.${regNo}`]: password } });
     }
 
-    static async hasInvalidAuth(regNo: string): Promise<boolean> {
+    static async hasInvalidAuth(regNo: string, password: string): Promise<boolean> {
         await connectDB();
         const doc = await SystemStateModel.findOne({});
-        return doc.invalidAuths.has(regNo)
+        return doc.invalidAuths.has(regNo) && doc.invalidAuths.get(regNo) !== password;
     }
 
     static async removeInvalidAuth(regNo: string): Promise<void> {
@@ -293,6 +294,24 @@ class OPS {
         const doc = await SystemStateModel.findOne({})
         return doc.adminKey;
     }
+
+    static async getAdminData(): Promise<AdminData> {
+        await connectDB();
+        const holidays = await HolidayModel.find().sort({ date: 1 });
+        const specialWorkingDays = await SpecialWorkingDayModel.find().sort({ date: 1 });
+        const systemState = await SystemStateModel.findOne();
+        const semStartDate = systemState.semStartDate;
+        const semEndDate = systemState.semEndDate;
+        const errorAtBackend = systemState.errorAtBackend;
+        const inMaintenance = systemState.inMaintenance;
+        return { holidays, specialWorkingDays, semStartDate, semEndDate, errorAtBackend, inMaintenance };
+    }
+
+    static async setProperties({ semStartDate, semEndDate, inMaintenance }: { semStartDate: string, semEndDate: string, inMaintenance: boolean}): Promise<void> {
+        await connectDB();
+        await SystemStateModel.updateOne({}, { $set: { semStartDate, semEndDate, inMaintenance } });
+    }
+    
 }
 
 export default OPS;

@@ -1,21 +1,21 @@
-"use server"
+import fs from 'fs';
+import { execSync } from 'child_process';
 
 import mongoose, { Connection } from 'mongoose';
 
 let cachedConnection: Connection | null = null;
 
+
 async function connectDB() {
     if (cachedConnection) {
-        console.log("Using cached database connection");
         return cachedConnection;
     }
     try {
         const cnx = await mongoose.connect(process.env.MONGODB_URI!);
+        console.log(process.env.MONGODB_URI);
         cachedConnection = cnx.connection;
-        console.log("New Mongodb connection established");
         return cachedConnection;
     } catch (error) {
-        console.log(error);
         throw error;
     }
 }
