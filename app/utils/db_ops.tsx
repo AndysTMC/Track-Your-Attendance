@@ -144,7 +144,7 @@ class OPS {
         return await SpecialWorkingDayModel.find();
     }
 
-    static async addSpecialWorkingDay(date: string, replacementDay: string): Promise<void> {
+    static async addSpecialWorkingDay(date: string, replacementDay: number): Promise<void> {
         await connectDB();
         const specialWorkingDay = new SpecialWorkingDayModel({ date, replacementDay });
         await specialWorkingDay.save();

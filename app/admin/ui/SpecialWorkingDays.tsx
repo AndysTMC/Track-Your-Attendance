@@ -9,28 +9,19 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { MdDeleteOutline } from "react-icons/md";
 import dayjs from "dayjs";
-
-const testSpecialWorkingDays: SpecialWorkingDay[] = [
-    { date: '2022-01-01', replacementDay: 'monday' },
-    { date: '2022-01-02', replacementDay: 'tuesday' },
-    { date: '2022-01-03', replacementDay: 'wednesday' },
-    { date: '2022-01-04', replacementDay: 'thursday' },
-    { date: '2022-01-05', replacementDay: 'friday' },
-    { date: '2022-01-06', replacementDay: 'saturday' },
-    { date: '2022-01-07', replacementDay: 'sunday' },
-];
+import { days } from "@/app/utils/frontend";
 
 export default function SpecialWorkingDays() {
     const dispatch = useDispatch<AppDispatch>();
     const [specialWorkingDaysDetails, setSpecialWorkingDaysDetails] = useState<SpecialWorkingDay[] | null>(null);
     const { adminData } = useSelector((state: RootState) => state.admin);
-    const [formData, setFormData] = useState<SpecialWorkingDay>({ date: dayjs().format('YYYY-MM-DD'), replacementDay: '' });
+    const [formData, setFormData] = useState<SpecialWorkingDay>({ date: dayjs().format('YYYY-MM-DD'), replacementDay: -1 });
     const handleAddSpecialWorkingDay = () => {
         if (formData.date && formData.replacementDay) {
             dispatch(addOrRemoveSpecialWorkingDay({ add: true, date: formData.date, replacementDay: formData.replacementDay }));
             dispatch(clearAdminData());
         }
-        setFormData({ date: dayjs().format('YYYY-MM-DD'), replacementDay: '' });
+        setFormData({ date: dayjs().format('YYYY-MM-DD'), replacementDay: -1 });
     }
     const handleDeleteSpecialWorkingDay = (index: number) => {
         if (specialWorkingDaysDetails){
@@ -125,7 +116,7 @@ export default function SpecialWorkingDays() {
                                                     text-center
                                                 `}
                                                 >
-                                                    {specialWorkingDaysDetails.replacementDay.toUpperCase().slice(0, 3)}
+                                                    {days[specialWorkingDaysDetails.replacementDay].toUpperCase().slice(0, 3)}
                                                 </div>
                                             </div>
                                             <div className={`
@@ -210,17 +201,17 @@ export default function SpecialWorkingDays() {
                                     rounded-b-lg
                                     p-2
                                 `}
-                                value={formData.replacementDay}
-                                onChange={(e) => setFormData({ ...formData, replacementDay: e.target.value })}
+                                value={formData.replacementDay ?? -1}
+                                onChange={(e) => setFormData({ ...formData, replacementDay: parseInt(e.target.value, 10) })}
                             >
-                                <option value="" disabled>Select Day</option>
-                                <option value="monday">Monday</option>
-                                <option value="tuesday">Tuesday</option>
-                                <option value="wednesday">Wednesday</option>
-                                <option value="thursday">Thursday</option>
-                                <option value="friday">Friday</option>
-                                <option value="saturday">Saturday</option>
-                                <option value="sunday">Sunday</option>
+                                <option value={-1} disabled>Select Day</option>
+                                <option value={1}>Monday</option>
+                                <option value={2}>Tuesday</option>
+                                <option value={3}>Wednesday</option>
+                                <option value={4}>Thursday</option>
+                                <option value={5}>Friday</option>
+                                <option value={6}>Saturday</option>
+                                <option value={0}>Sunday</option>
                             </select>
                         </div>
                         <div className={`

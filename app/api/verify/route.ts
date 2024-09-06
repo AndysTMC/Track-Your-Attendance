@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     try {
         const { regNo, checksum }: { regNo: string, checksum: string } = await request.json();
         if (!regNo || !checksum) { return errorResponse('Invalid credentials'); }
-        if (await OPS.hasErrorAtBackend()) { return errorResponse('Error at backend'); }
+        if (await OPS.isInMaintenance()) { return errorResponse('Error at backend'); }
         if (await OPS.hasUser(regNo)) {
             if (generateChecksum(JSON.stringify(await OPS.getUserData(regNo))) == checksum) {
                 return new Response(JSON.stringify({ isValid: true }), {

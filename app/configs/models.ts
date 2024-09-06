@@ -85,7 +85,7 @@ const HolidaySchema = new Schema({
 
 const SpecialWorkingDaySchema = new Schema({
     date: { type: String, required: true },
-    replacementDay: { type: String, required: true },
+    replacementDay: { type: Number, required: true },
 }, { versionKey: false });
 
 const SystemStateSchema = new Schema({

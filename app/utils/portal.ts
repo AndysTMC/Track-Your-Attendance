@@ -3,7 +3,7 @@ import fs from 'fs';
 import axios from 'axios';
 import FormData from 'form-data';
 import * as cheerio from 'cheerio';
-import { Timetable, Course, Session, Profile, Timing, Attendance } from '@/app/utils/hybrid'
+import { Timetable, Course, Session, Profile, Timing, Attendance, Holiday, SpecialWorkingDay } from '@/app/utils/hybrid'
 import { 
     Portal, ScrapeData, JSESSIONID_CHECK_C, CAPTCHA_CHECK_C, CREDENTIALS_CHECK_C, NA_C, UNKNOWN_C, 
     FAILED_AUTH_C, INVALID_AUTH_C, FAILED_SCRAPE_C, PORTAL_ERROR_C, PROFILE_SCRAPE_C, TIMETABLE_SCRAPE_C, ATTENDANCE_SCRAPE_C,
@@ -119,9 +119,10 @@ const getCaptcha = async (JSESSIONID: string): Promise<string> => {
         formData.append('file', fs.createReadStream(filePath));
         const response = await axios.post("https://tya-text-extract.onrender.com/extract", formData, {
             headers: {
-                "Content-Type": `multipart/form-data; boundary=${formData.getBoundary()}`
-            }
-        });
+              "Content-Type": `multipart/form-data; boundary=${formData.getBoundary()}`
+            },
+            timeout: 3000
+          })
         const text = response.data.captchaText;
         if (text == null || text == undefined) throw new Error("Failed to extract text from captcha image");
         return text.trim();
@@ -283,12 +284,10 @@ const setTotalInAttendance = async (
     try {
         const startDateString = await OPS.getSemStartDate();
         const endDateString = await OPS.getSemEndDate();
-        console.log(startDateString, endDateString);
         const startDate: Date = new Date(startDateString as string);
         const endDate: Date = new Date(endDateString as string); 
-        console.log(startDate, endDate);
         const days: Array<string> = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const countWeekdayOccurrences = (startDate: Date, endDate: Date): Array<number> => {
+        const countWeekdayOccurrences = async (startDate: Date, endDate: Date): Promise<Array<number>> => {
             const dayCounts = new Array(7).fill(0);
             const totalDays = Math.ceil( (endDate.getTime() - startDate.getTime())  / (1000 * 60 * 60 * 24));
             const startDay = startDate.getDay();
@@ -299,9 +298,24 @@ const setTotalInAttendance = async (
             for (let i = 0; i <= totalDays % 7; i++) {
                 dayCounts[(startDay + i) % 7]++;
             }
+            const holidays: Holiday[] = await OPS.getHolidays();
+            const specialWorkingDays: SpecialWorkingDay[]  = await OPS.getSpecialWorkingDays();
+            holidays.forEach(holiday => {
+                const holidayDate = new Date(holiday.date);
+                if (holidayDate >= startDate && holidayDate <= endDate) {
+                    dayCounts[holidayDate.getDay()]--;
+                }
+            });
+            specialWorkingDays.forEach(specialWorkingDay => {
+                const specialWorkingDate = new Date(specialWorkingDay.date);
+                const replacementDay = specialWorkingDay.replacementDay;
+                if (specialWorkingDate >= startDate && specialWorkingDate <= endDate) {
+                    dayCounts[replacementDay]++;
+                }
+            });
             return dayCounts;
         };
-        const weekdayOccurrences = countWeekdayOccurrences(startDate, endDate);
+        const weekdayOccurrences = await countWeekdayOccurrences(startDate, endDate);
         attendanceInfo.forEach(attendance => {
             const courseCode = attendance.courseCode;
             let totalSessions = 0;

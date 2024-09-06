@@ -6,11 +6,7 @@ const withPWA = pwa({
 });
 
 const nextConfig = withPWA({
-    reactStrictMode: true
-});
 
-// const nextConfig = {
-//     serverExternalPackages: ['tesseract.js'],
-// };
+});
 
 export default nextConfig;

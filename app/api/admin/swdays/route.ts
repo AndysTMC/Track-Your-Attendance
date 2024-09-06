@@ -3,6 +3,14 @@ import OPS from '@/app/utils/db_ops';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdmin } from '../middleware';
 
+export async function GET(request: NextRequest) {
+    try {
+        const specialWorkingDays = await OPS.getSpecialWorkingDays();
+        return NextResponse.json(specialWorkingDays);
+    } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
 
 
 export async function POST(request: NextRequest) {

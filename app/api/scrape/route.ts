@@ -48,7 +48,10 @@ async function executeScrape(item: QueueItem) {
       count++;
     }
     // console.log(data);
-    if (!data) { OPS.updateUserScrapeProgress(regNo, false); return; }
+    if (!data) { 
+      if (await OPS.hasUser(regNo)) { await OPS.updateUserScrapeProgress(regNo, false); }
+      return; 
+    }
     try {
       if (await OPS.hasUser(item.credentials.regNo)) {
         const user = await OPS.getUser(item.credentials.regNo);
@@ -68,9 +71,13 @@ async function executeScrape(item: QueueItem) {
         await OPS.addOrUpdateUser(item.credentials.regNo, user);
         console.info("User added to database");
       }
-    } catch (err: any) { }
+    } catch (err: any) { 
+      console.error(err);
+      await OPS.updateUserScrapeProgress(regNo, false);
+    }
   } catch (err: any) {
-    handleScrapeErrors(err, item.credentials.regNo, decryptedPassword);
+    await handleScrapeErrors(err, item.credentials.regNo, decryptedPassword);
+    await OPS.updateUserScrapeProgress(regNo, false);
   }
 }
 
@@ -261,6 +268,7 @@ export async function POST(request: Request): Promise<void | Response> {
     if (await OPS.hasUser(regNo) && !(await OPS.getScrapeInProgress(regNo))) return dataResponse(regNo);
     return dKeyResponse(regNo, dKey);
   } catch (err: any) {
+    console.log(err)
     return handleResponses(err, regNo);
   }
 }

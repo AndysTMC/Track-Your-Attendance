@@ -13,7 +13,7 @@ import Image from 'next/image';
 export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim: boolean, setBackgroundDim: (dim: boolean) => void}) {
     const dispatch = useDispatch<AppDispatch>();
     const maxRefetchCount = Number(process.env.MAX_REFETCH_COUNT) || 5;
-    const { inQueue, userData, error, errorStatusCode, fetchInProgress } = useSelector((state: RootState) => state.user);
+    const { inQueue, userData, error, errorStatusCode, fetchInProgress, requestProcessing } = useSelector((state: RootState) => state.user);
     const [refetchMode, setRefetchMode] = useState(false);
     const [showQr, setShowQr] = useState(false);
     const handleRefetchClick = () => {
@@ -30,10 +30,12 @@ export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim
         if (fetchInProgress == false) {
             setRefetchMode(false);
         } else {
-            dispatch(scrape({ regNo, password: null, dKey, refetch: false }));
+            if (!requestProcessing) {
+                dispatch(scrape({ regNo, password: null, dKey, refetch: false }));
+            }
         }
     }
-    const { setActive: setRefetching } = useEveryTime(refetchUserData, 3000);
+    const { setActive: setRefetching } = useEveryTime(refetchUserData, 1000);
     useEffect(() => {
         if (errorStatusCode != null && [400, 401, 503].includes(errorStatusCode)) {
             dispatch(exit());
@@ -104,7 +106,7 @@ export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim
                                 text-white
                                 text-lg
                                 `} />
-                            <h2 className="text-white text-ssm">QR</h2>
+                            <h2 className="text-white text-ssm">Share</h2>
                         </div>
                         {
                             refetchMode ? (

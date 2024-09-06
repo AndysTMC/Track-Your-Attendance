@@ -14,6 +14,7 @@ import AdminArea from './AdminArea';
 import { setNavigateToAdminControl } from '../redux/adminSlice';
 import DownloadApp from './DownloadApp';
 import useEveryTime from '../hooks/EveryTime';
+import { clear } from 'console';
 
 const getUserDataLocal = async (): Promise<UserData | null> => {
     try {
@@ -53,8 +54,9 @@ export default function Collect() {
     const handleClose = () => dispatch(clearError());
     const fetchUserData = async () => {
         let dKey = localStorage.getItem('TYASRMAPDKEY') ?? null;
-        if (userData || (errorStatusCode && [400, 401, 500, 503].includes(errorStatusCode))) { setMode('normal') }
-        else {
+        if (userData || (errorStatusCode && [400, 401, 500, 503].includes(errorStatusCode))) { 
+            setMode('normal'); dispatch(clearError());
+        } else {
             if (requestProcessing) { return; }
             dispatch(setRequestProcessing(true));
             if (dKey == null || errorStatusCode == 200) {
@@ -105,6 +107,7 @@ export default function Collect() {
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();
+        console.log(regNo, password);
         try {
             validateUsername(regNo);
             validatePassword(password);
@@ -112,6 +115,7 @@ export default function Collect() {
             dispatch(setError(err.message));
             return;
         }
+        console.log('fetching');
         dispatch(setInQueueINF());
         dispatch(setFetchInProgress(true));
         setMode('fetch');
@@ -202,11 +206,11 @@ export default function Collect() {
                         </button>
                     </form>
                     : (mode == 'fetch') ?
-                        (<div className='w-full p-2 bsm:p-8 flex flex-row items-center justify-center text-base bsm:text-xl gap-x-2 select-none'>
+                        (<div className='w-full p-2 bsm:p-8 flex flex-row items-center justify-center text-base text-white bsm:text-xl gap-x-2 select-none'>
                             <div className="h-10 flex flex-row items-center gap-x-2 animate-pulse">
                                 <BsFillPeopleFill className={`
                                 w-7 bsm:w-10
-                                h-7 bsm:h-10 text-white
+                                h-7 bsm:h-10
                             `} />
                                 {inQueue != Infinity ? Math.max(0, inQueue) : '?'}
                             </div>
@@ -214,8 +218,8 @@ export default function Collect() {
                         </div>
                         )
                         : (mode == 'verify') ?
-                            <div className='w-full p-8 flex flex-row items-center justify-center text-xl gap-x-2 select-none'>
-                                <FaCircleCheck className="w-5 h-5 text-white" />
+                            <div className='w-full p-8 flex flex-row items-center justify-center text-xl text-white gap-x-2 select-none'>
+                                <FaCircleCheck className="w-5 h-5" />
                                 <h3>Verifying..</h3>
                             </div>
                             : null

@@ -68,7 +68,7 @@ export default function Properties() {
                 >
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
-                            label="Special Working Day Date"
+                            label="Semester Start Date"
                             value={formData.semStartDate ? dayjs(formData.semStartDate) : dayjs()}
                             onChange={(newValue) => setFormData({ ...formData, semStartDate: newValue ? newValue.format('YYYY-MM-DD') : '' })}
                             sx={{
@@ -111,7 +111,7 @@ export default function Properties() {
                 >
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
-                            label="Special Working Day Date"
+                            label="Semester End Date"
                             value={formData.semEndDate ? dayjs(formData.semEndDate) : dayjs()}
                             onChange={(newValue) => setFormData({ ...formData, semEndDate: newValue ? newValue.format('YYYY-MM-DD') : '' })}
                             sx={{

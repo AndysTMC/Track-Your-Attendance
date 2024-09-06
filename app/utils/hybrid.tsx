@@ -87,7 +87,7 @@ export type Holiday = {
 
 export type SpecialWorkingDay = {
     date: string;
-    replacementDay: string;
+    replacementDay: number;
 }
 
 

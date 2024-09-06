@@ -53,7 +53,7 @@ export const addOrRemoveHoliday = createAsyncThunk(
 
 export const addOrRemoveSpecialWorkingDay = createAsyncThunk(
     'admin/addOrRemoveSpecialWorkingDay',
-    async ({ add, date, replacementDay }: { add: boolean, date: string, replacementDay: string }, { rejectWithValue }) => {
+    async ({ add, date, replacementDay }: { add: boolean, date: string, replacementDay: number }, { rejectWithValue }) => {
         try {
             const response = await axios.post('/api/admin/swdays', { add, date, replacementDay });
             return { ...response.data, status: response.status, holidays: response.data.holidays as SpecialWorkingDay[] };

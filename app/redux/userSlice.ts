@@ -104,9 +104,6 @@ const userSlice = createSlice({
         state.error = (action.payload as { error: string }).error;
         state.errorStatusCode = (action.payload as { status: number }).status;
         state.inQueue = 0;
-        localStorage.removeItem('TYASRMAPUDATA');
-        localStorage.removeItem('TYASRMAPREGNO');
-        localStorage.removeItem('TYASRMAPDKEY');
       });
   },
 });
