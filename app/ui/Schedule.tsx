@@ -85,6 +85,7 @@ export default function Schedule() {
                             w-auto h-auto
                             flex items-center justify-center
                             cursor-pointer
+                            active:bg-zinc-900
                         `}
                         onClick={() => handleDayIndexChange(-1)}
                     >
@@ -114,6 +115,7 @@ export default function Schedule() {
                         <h3 className={`
                                 justify-self-center
                                 text-xs sm:text-base
+                                text-white
                             `}
                         >
                             {(todayIndex == dayIndex) ? 'TODAY' : days[dayIndex].toUpperCase()}
@@ -132,6 +134,7 @@ export default function Schedule() {
                             w-auto h-auto
                             flex items-center justify-center
                             cursor-pointer
+                            active:bg-zinc-900
                         `}
                         onClick={() => handleDayIndexChange(1)}
                     >

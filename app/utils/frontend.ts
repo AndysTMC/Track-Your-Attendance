@@ -128,22 +128,34 @@ export const getCurrentDayIndex = ():number => {
     return day
 }
 
-export const getPercent = (presents: number, absents: number): number => {
-    const total = presents + absents
-    const result =  (presents / total) * 100
-    return result;
+export const getPercent = (attendance: Attendance): number => {
+    const maxODML = Math.ceil(attendance.total * 0.15)
+    const ODMLTaken = attendance.odml;
+    const ODMLConsidered = Math.min(ODMLTaken, maxODML);
+    const present = attendance.present;
+    const absent = attendance.absent;
+    const totalScheduled = present + absent;
+    const percent = (present + ODMLConsidered) / (totalScheduled) * 100;
+    return percent;
 }
 
-export const getAdditionalAttendanceRequired = (presents: number, absents: number): number => {
-    const result = Math.max(0, Math.ceil((absents * 0.75 - presents * 0.25) / 0.25));
-    return result;
+export const getAdditionalAttendanceRequired = (attendance: Attendance): number => {
+    const maxODML = Math.ceil(attendance.total * 0.15)
+    const ODMLTaken = attendance.odml;
+    const ODMLConsidered = Math.min(ODMLTaken, maxODML);
+    const present = attendance.present;
+    const absent = attendance.absent;
+    return Math.max(0, 3 * absent - present - 4 * ODMLConsidered);
 }
 
-export const getAbsencesAllowed = (absents: number, notEntered: number, total: number): number => {
-    const result = Math.max(0, Math.ceil(total * 0.25 - absents - notEntered));
-    return result;
+export const getAbsencesAllowed = (attendance: Attendance): number => {
+    const maxODML = Math.ceil(attendance.total * 0.15);
+    const ODMLTaken = attendance.odml;
+    const ODMLConsidered = Math.min(ODMLTaken, maxODML);
+    const absent = attendance.absent;
+    const total = attendance.total;
+    return Math.max(0, Math.floor(ODMLConsidered + 0.25 * total - absent));
 }
-
 
 export const getPrettierIdentity = (profile: Profile): string =>  {
     let result = 'IDENTITY\n\n';
@@ -197,9 +209,9 @@ export const getPrettierAttendanceStats = (attendances: Array<Attendance>): stri
     for (let i = 0; i < attendances.length; i++) {
         result += 'Attendance-' + (i + 1) + '\n';
         result += 'Course Code: ' + attendances[i].courseCode + '\n';
-        result += 'Percent: ' + getPercent(attendances[i].present, attendances[i].absent).toFixed(2) + '\n';
-        result += 'Add. Att. Req.: ' + getAdditionalAttendanceRequired(attendances[i].present, attendances[i].absent).toFixed(0) + '\n';
-        result += 'Ab. All.: ' + getAbsencesAllowed(attendances[i].absent, attendances[i].notEntered, attendances[i].total).toFixed(0) + '\n\n';
+        result += 'Percent: ' + getPercent(attendances[i]).toFixed(2) + '\n';
+        result += 'Add. Att. Req.: ' + getAdditionalAttendanceRequired(attendances[i]).toFixed(0) + '\n';
+        result += 'Ab. All.: ' + getAbsencesAllowed(attendances[i]).toFixed(0) + '\n\n';
     }
     return result;
 }

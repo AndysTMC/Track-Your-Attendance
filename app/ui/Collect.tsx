@@ -14,7 +14,7 @@ import AdminArea from './AdminArea';
 import { setNavigateToAdminControl } from '../redux/adminSlice';
 import DownloadApp from './DownloadApp';
 import useEveryTime from '../hooks/EveryTime';
-import { clear } from 'console';
+import { BsInfo } from "react-icons/bs";
 
 const getUserDataLocal = async (): Promise<UserData | null> => {
     try {
@@ -107,7 +107,6 @@ export default function Collect() {
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-        console.log(regNo, password);
         try {
             validateUsername(regNo);
             validatePassword(password);
@@ -115,7 +114,6 @@ export default function Collect() {
             dispatch(setError(err.message));
             return;
         }
-        console.log('fetching');
         dispatch(setInQueueINF());
         dispatch(setFetchInProgress(true));
         setMode('fetch');
@@ -191,7 +189,23 @@ export default function Collect() {
                                 transition-all
                         `} />
                         </div>
-
+                        <div className={`
+                            italic text-xs text-gray-500
+                            flex items-start justify-center
+                            gap-x-2
+                            `}
+                        >
+                            <div className={`
+                                    w-4 h-4 bg-white rounded-full
+                                    flex items-center justify-center
+                                `}
+                            >
+                                <BsInfo className="w-4 h-4" />
+                            </div>
+                            <div>
+                                {"Use the same credentials you use to login to SRMAP's Parent Portal"}
+                            </div>
+                        </div>
                         <button className={`
                         w-24 h-10
                         bg-white 

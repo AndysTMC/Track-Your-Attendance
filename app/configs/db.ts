@@ -12,7 +12,6 @@ async function connectDB() {
     }
     try {
         const cnx = await mongoose.connect(process.env.MONGODB_URI!);
-        console.log(process.env.MONGODB_URI);
         cachedConnection = cnx.connection;
         return cachedConnection;
     } catch (error) {

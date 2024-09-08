@@ -142,7 +142,7 @@ export default function AttendanceStats() {
                                             flex justify-center items-center
                                         `}
                                         >
-                                            {getPercent(attendance.present, attendance.absent).toFixed(2)}%
+                                            {getPercent(attendance).toFixed(2)}%
                                         </div>
                                         <div className={`
                                             w-auto h-auto
@@ -156,7 +156,7 @@ export default function AttendanceStats() {
                                             flex justify-center items-center
                                         `}
                                         >
-                                            {getAdditionalAttendanceRequired(attendance.present, attendance.absent)}
+                                            {getAdditionalAttendanceRequired(attendance)}
                                         </div>
                                         <div className={`
                                             w-auto h-auto
@@ -170,7 +170,7 @@ export default function AttendanceStats() {
                                             flex justify-center items-center
                                         `}
                                         >
-                                            {getAbsencesAllowed(attendance.absent, attendance.notEntered, attendance.total)}
+                                            {getAbsencesAllowed(attendance)}
                                         </div>
                                     </React.Fragment>
                                 )

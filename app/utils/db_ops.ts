@@ -1,8 +1,8 @@
 
 import { connectDB, isConnectionOpen } from '@/app/configs/db';
 import { UserModel, HolidayModel, SpecialWorkingDayModel, SystemStateModel } from '@/app/configs/models';
-import { Holiday, SpecialWorkingDay, UserData, AdminData } from '../utils/hybrid';
-import { generateAdminKey, OtherData, SSMap, User } from '../utils/backend';
+import { Holiday, SpecialWorkingDay, UserData, AdminData } from './hybrid';
+import { generateAdminKey, OtherData, SSMap, User } from './backend';
 import { get } from 'http';
 
 
@@ -310,6 +310,11 @@ class OPS {
     static async setProperties({ semStartDate, semEndDate, inMaintenance }: { semStartDate: string, semEndDate: string, inMaintenance: boolean}): Promise<void> {
         await connectDB();
         await SystemStateModel.updateOne({}, { $set: { semStartDate, semEndDate, inMaintenance } });
+    }
+
+    static async clearAllErrors(regNo: string): Promise<void> {
+        await connectDB();
+        await SystemStateModel.updateOne({}, { $unset: { [`failedAuths.${regNo}`]: '', [`invalidAuths.${regNo}`]: '', [`portalErrors.${regNo}`]: '', [`failedScrapes.${regNo}`]: '' } });
     }
     
 }

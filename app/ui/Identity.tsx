@@ -90,7 +90,7 @@ export default function Identity() {
                 </div>
                 <div className={`
                 text-black
-                col-span-10 sm: col-span-7 bsm:col-span-4 lg:col-span-3
+                col-span-10 sm:col-span-7 bsm:col-span-4 lg:col-span-3
                 `}>
                     <div className='text-ssm'>Program</div>
                     <div className='text-sm text-balance'>{program}</div>

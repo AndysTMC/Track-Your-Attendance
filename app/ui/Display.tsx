@@ -50,7 +50,7 @@ export default function Display() {
             </div>
             <AppBar backgroundDim={backgroundDim} setBackgroundDim={setBackgroundDim} />
             <Snackbar
-                open={error != null}
+                open={error != null && errorStatusCode != null && errorStatusCode != 500}
                 autoHideDuration={5000}
                 onClose={handleClose}
                 message={error}

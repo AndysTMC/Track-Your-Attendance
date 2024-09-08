@@ -5,7 +5,7 @@ import { BsFillPeopleFill } from "react-icons/bs";
 import { GrDocumentUpdate } from "react-icons/gr";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../redux/store";
-import { scrape, exit, setInQueueINF, setFetchInProgress } from "../redux/userSlice";
+import { scrape, exit, setInQueueINF, setFetchInProgress, setRequestProcessing } from "../redux/userSlice";
 import useEveryTime from "@/app/hooks/EveryTime";
 import Image from 'next/image';
 
@@ -31,6 +31,7 @@ export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim
             setRefetchMode(false);
         } else {
             if (!requestProcessing) {
+                dispatch(setRequestProcessing(true));
                 dispatch(scrape({ regNo, password: null, dKey, refetch: false }));
             }
         }
@@ -40,7 +41,7 @@ export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim
         if (errorStatusCode != null && [400, 401, 503].includes(errorStatusCode)) {
             dispatch(exit());
         }
-        if (errorStatusCode && [200, 500].includes(errorStatusCode)) {
+        if (errorStatusCode && [200].includes(errorStatusCode)) {
             setRefetchMode(false);
         }
         if (refetchMode) { setRefetching(true); }
@@ -54,7 +55,7 @@ export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim
                 <div className={`
                         w-auto h-auto
                         bg-black 
-                        rounded-lg rounded-lg ${!showQr ? 'bsm:rounded-full' : ''}
+                        rounded-lg ${!showQr ? 'bsm:rounded-full' : ''}
                         flex flex-col items-center justify-center
                         select-none
                         shadow-lg shadow-zinc-700

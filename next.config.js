@@ -5,8 +5,6 @@ const withPWA = pwa({
     dest: 'public',
 });
 
-const nextConfig = withPWA({
-
-});
+const nextConfig = withPWA();
 
 export default nextConfig;

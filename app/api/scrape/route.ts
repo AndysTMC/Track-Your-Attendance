@@ -39,7 +39,9 @@ async function executeScrape(item: QueueItem) {
       try {
         data = await scrape(regNo, decryptedPassword, item.portal);
       } catch (err: any) {
-        await handleScrapeErrors(err, item.credentials.regNo, decryptedPassword);
+        if (!item.refetch || err.message.split(":::")[0] == INVALID_AUTH_C) {
+          await handleScrapeErrors(err, item.credentials.regNo, decryptedPassword);
+        }
         if (await OPS.hasInvalidAuth(regNo, decryptedPassword)) {
           await OPS.updateUserScrapeProgress(regNo, false);
           return;
@@ -47,7 +49,6 @@ async function executeScrape(item: QueueItem) {
       }
       count++;
     }
-    // console.log(data);
     if (!data) { 
       if (await OPS.hasUser(regNo)) { await OPS.updateUserScrapeProgress(regNo, false); }
       return; 
@@ -69,10 +70,8 @@ async function executeScrape(item: QueueItem) {
         const userData: UserData = { ...data, scrapingInfo };
         const user: User = { userData, userCredentials: item.credentials, scrapeInProgress: false };
         await OPS.addOrUpdateUser(item.credentials.regNo, user);
-        console.info("User added to database");
       }
     } catch (err: any) { 
-      console.error(err);
       await OPS.updateUserScrapeProgress(regNo, false);
     }
   } catch (err: any) {
@@ -231,6 +230,7 @@ export async function POST(request: Request): Promise<void | Response> {
       if (!(await OPS.isRefetchPossible(regNo))) {
         throw new Error([CANT_REFETCH_C, REFETCH_POSSIBLITY_CHECK_C, REFETCH_LIMIT_REACHED_C].join(':::')); 
       }
+      await OPS.clearAllErrors(regNo);
     }
     let portal: Portal | null = null;
     let errorType, errorLocation, errorMessage;
@@ -241,23 +241,22 @@ export async function POST(request: Request): Promise<void | Response> {
       errorLocation = err.message.split(":::")[1];
       errorMessage = err.message.split(":::")[2];
     }
-
     if (await OPS.hasInvalidAuth(regNo, password) || errorType === INVALID_AUTH_C) { 
       await OPS.removeInvalidAuth(regNo);
       throw new Error([CANT_FETCH_C, INVALID_AUTH_CHECK_C, INVALID_CREDENTIALS].join(':::'));
      }
     
-    if (await OPS.hasFailedAuth(regNo) || errorType === FAILED_AUTH_C) {
+    if (!refetch && await OPS.hasFailedAuth(regNo) || errorType === FAILED_AUTH_C) {
       await OPS.removeFailedAuth(regNo);
       throw new Error([CANT_FETCH_C, FAILED_AUTH_CHECK_C, PLEASE_TRY_AGAIN].join(':::'));
     }
     
-    if (await OPS.hasFailedScrape(regNo) || errorType === FAILED_SCRAPE_C) {
+    if (!refetch && await OPS.hasFailedScrape(regNo) || errorType === FAILED_SCRAPE_C) {
       await OPS.removeFailedScrape(regNo);
       throw new Error([CANT_FETCH_C, FAILED_SCRAPE_CHECK_C, FAILED_TO_FETCH_DATA].join(':::'));
     }
     
-    if (await OPS.hasPortalError(regNo) || errorType === PORTAL_ERROR_C) { 
+    if (!refetch && await OPS.hasPortalError(regNo) || errorType === PORTAL_ERROR_C) { 
       await OPS.removePortalError(regNo);
       throw new Error([CANT_FETCH_C, PORTAL_ERROR_CHECK_C, PLEASE_TRY_AGAIN_LATER].join(':::')); 
     }
@@ -268,7 +267,6 @@ export async function POST(request: Request): Promise<void | Response> {
     if (await OPS.hasUser(regNo) && !(await OPS.getScrapeInProgress(regNo))) return dataResponse(regNo);
     return dKeyResponse(regNo, dKey);
   } catch (err: any) {
-    console.log(err)
     return handleResponses(err, regNo);
   }
 }
