@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
-import pwa from 'next-pwa';
+import pwa from "next-pwa";
 
 const withPWA = pwa({
-    dest: 'public',
+	dest: "public",
 });
 
-const nextConfig = withPWA();
-
+const nextConfig = withPWA({
+	experimental: {
+	  instrumentationHook: true,
+	},
+  });
 export default nextConfig;

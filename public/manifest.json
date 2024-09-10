@@ -1,33 +1,33 @@
 {
-  "name": "TYA",
-  "short_name": "TYA",
-  "description": "A Place to track your Attendance",
-  "icons": [
-    {
-      "src": "/icon-dark-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any",
-      "theme_color": "#ffffff",
-      "background_color": "#ffffff"
-    }
-  ],
-  "start_url": "/",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
-  "display": "standalone",
-  "screenshots": [
-    {
-      "src": "/screenshot-1170x2532.png",
-      "type": "image/png",
-      "sizes": "1170x2532",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshot-2048x1200.png",
-      "type": "image/png",
-      "sizes": "2048x1200",
-      "form_factor": "wide"
-    }
-  ]
+	"name": "TYA",
+	"short_name": "TYA",
+	"description": "A Place to track your Attendance",
+	"icons": [
+		{
+			"src": "/icon-dark-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any",
+			"theme_color": "#ffffff",
+			"background_color": "#ffffff"
+		}
+	],
+	"start_url": "/",
+	"background_color": "#ffffff",
+	"theme_color": "#ffffff",
+	"display": "standalone",
+	"screenshots": [
+		{
+			"src": "/screenshot-1170x2532.png",
+			"type": "image/png",
+			"sizes": "1170x2532",
+			"form_factor": "narrow"
+		},
+		{
+			"src": "/screenshot-2048x1200.png",
+			"type": "image/png",
+			"sizes": "2048x1200",
+			"form_factor": "wide"
+		}
+	]
 }
