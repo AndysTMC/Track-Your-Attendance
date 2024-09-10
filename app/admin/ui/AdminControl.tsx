@@ -50,7 +50,7 @@ export default function AdminControl() {
                         text-balance
                     `}
                     >
-                        TYA-SRMAP Admin-Control
+                        TYA Admin-Control
                     </h1>
                     <div className={`
                             absolute right-4

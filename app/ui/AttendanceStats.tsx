@@ -4,8 +4,10 @@ import { RootState } from "../redux/store";
 import { Attendance } from "../utils/hybrid";
 import React from "react";
 import { get } from "http";
-import { getPercent, getAdditionalAttendanceRequired, getAbsencesAllowed, getPrettierAttendanceStats } from "../utils/frontend";
+import { getPercent, getPrettierAttendanceStats, isSafe, getSkipsLeft, getODMLConsidered } from "../utils/frontend";
 import CopyPaste from "./CopyPaste";
+import { IoMdThumbsUp } from "react-icons/io";
+import { CgDanger } from "react-icons/cg";
 
 
 export default function AttendanceStats() {
@@ -80,7 +82,7 @@ export default function AttendanceStats() {
                         flex justify-center items-center
                     `}
                     >
-                        Perc.
+                        Usable ODML
                     </div>
                     <div className={`
                         w-auto h-auto
@@ -95,12 +97,13 @@ export default function AttendanceStats() {
                         flex justify-center items-center
                     `}
                     >
-                        Add. Att. Req.
+                        Skips Left
                     </div>
                     <div className={`
                         w-auto h-auto
                         bg-black
                         text-white text-center 
+                        
                         text-xs bsm:text-sm
                         font-bold
                         col-span-1
@@ -109,7 +112,7 @@ export default function AttendanceStats() {
                         flex justify-center items-center
                     `}
                     >
-                        Ab. All.
+                        {"Status (ODML incl.)"}
                     </div>
                     {
                         attendanceDetails ? (
@@ -118,8 +121,8 @@ export default function AttendanceStats() {
                                     <React.Fragment key={index}>
                                         <div className={`
                                             w-auto h-auto
-                                            bg-neutral-200
-                                            text-neutral-800 text-center 
+                                            bg-zinc-200
+                                            text-zinc-800 text-center 
                                             text-xs bsm:text-sm
                                             font-bold
                                             col-span-1
@@ -132,8 +135,8 @@ export default function AttendanceStats() {
                                         </div>
                                         <div className={`
                                             w-auto h-auto
-                                            bg-neutral-100
-                                            text-neutral-800 text-center 
+                                            bg-zinc-100
+                                            text-zinc-800 text-center 
                                             text-xs bsm:text-sm
                                             font-medium
                                             col-span-1
@@ -142,12 +145,12 @@ export default function AttendanceStats() {
                                             flex justify-center items-center
                                         `}
                                         >
-                                            {getPercent(attendance).toFixed(2)}%
+                                            {getODMLConsidered(attendance)}
                                         </div>
                                         <div className={`
                                             w-auto h-auto
-                                            bg-neutral-100
-                                            text-neutral-800 text-center 
+                                            bg-zinc-100
+                                            text-zinc-800 text-center 
                                             text-xs bsm:text-sm
                                             font-medium
                                             col-span-1
@@ -156,12 +159,12 @@ export default function AttendanceStats() {
                                             flex justify-center items-center
                                         `}
                                         >
-                                            {getAdditionalAttendanceRequired(attendance)}
+                                            {getSkipsLeft(attendance)}
                                         </div>
                                         <div className={`
                                             w-auto h-auto
-                                            bg-neutral-100
-                                            text-neutral-800 text-center 
+                                            bg-zinc-100
+                                            text-zinc-800 text-center 
                                             text-xs bsm:text-sm
                                             font-medium
                                             col-span-1
@@ -170,7 +173,19 @@ export default function AttendanceStats() {
                                             flex justify-center items-center
                                         `}
                                         >
-                                            {getAbsencesAllowed(attendance)}
+                                            {
+                                                isSafe(attendance) ? (
+                                                    <IoMdThumbsUp className={`
+                                                        text-black
+                                                        text-2xl
+                                                    `} />
+                                                ) : (
+                                                    <CgDanger className={`
+                                                        text-black
+                                                        text-2xl
+                                                    `} />
+                                                )
+                                            }
                                         </div>
                                     </React.Fragment>
                                 )
@@ -179,8 +194,8 @@ export default function AttendanceStats() {
                         ) : (
                             <div className={`
                                 w-full h-auto
-                                bg-neutral-200
-                                text-neutral-800 text-center 
+                                bg-zinc-200
+                                text-zinc-800 text-center 
                                 text-xs bsm:text-sm
                                 font-bold
                                 col-span-4

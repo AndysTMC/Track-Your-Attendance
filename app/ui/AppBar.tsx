@@ -59,14 +59,15 @@ export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim
                         flex flex-col items-center justify-center
                         select-none
                         shadow-lg shadow-zinc-700
+                         overflow-y-auto
                         `}>
                     {
                         showQr ? (
                             <div className={`
-                                w-48 h-48 bsm:w-52 bsm:h-52
-                                my-12 bsm:my-20 transition-all duration-500
+                                w-52 h-52 bsm:w-64 bsm:h-64
+                                my-3.5 bsm:my-7 transition-all duration-500
                             `}>
-                                <Image src="/LTSQR.png" alt="QR" fill={false} layout="responsive" width={200} height={200} />
+                                <Image src="/LTSQR.png" alt="QR" fill={false} layout="responsive" width={225} height={225} />
                             </div>
                         ) : null
                     }
@@ -89,7 +90,7 @@ export default function AppBar({backgroundDim, setBackgroundDim}: {backgroundDim
                             <h1 className={`
                                 font-black 
                                 text-base bsm:text-lg
-                                `}>TYA-SRMAP</h1>
+                                `}>TYA</h1>
                         </div>
                         <div className={`
                             w-auto

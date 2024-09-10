@@ -16,7 +16,7 @@ export default function ScheduleSCard({
                 w-5 h-auto
                 grow-0
                 flex items-center justify-center
-                text-ssm font-semibold text-neutral-800
+                text-ssm font-semibold text-zinc-800
                 `}
             >
                 {sessionNo}

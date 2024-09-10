@@ -10,7 +10,7 @@ console.warn = () => {};
 console.error = () => {};
 
 export const metadata: Metadata = {
-  title: "TYA-SRMAP",
+  title: "TYA",
   description: "A Place to track your Attendance",
 };
 
@@ -26,10 +26,10 @@ export default function RootLayout({
       <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
       <meta name="mobile-web-app-capable" content="yes" />
       <meta name="mobile-web-app-status-bar-style" content="default" />
-      <meta name="mobile-web-app-title" content="TYA-SRMAP" />
+      <meta name="mobile-web-app-title" content="TYA" />
       <meta name="mobile-web-app-fullscreen" content="yes" />
       <meta name="apple-touch-fullscreen" content="yes" />
-      <meta name="apple-mobile-web-app-title" content="TYA-SRMAP" />
+      <meta name="apple-mobile-web-app-title" content="TYA" />
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       <link rel="apple-touch-icon" sizes="180x180" href="/Icon-180.png" />
       <meta name="apple-mobile-web-app-capable" content="yes" />

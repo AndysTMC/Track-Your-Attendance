@@ -15,6 +15,7 @@ import { setNavigateToAdminControl } from '../redux/adminSlice';
 import DownloadApp from './DownloadApp';
 import useEveryTime from '../hooks/EveryTime';
 import { BsInfo } from "react-icons/bs";
+import Link from 'next/link';
 
 const getUserDataLocal = async (): Promise<UserData | null> => {
     try {
@@ -119,28 +120,30 @@ export default function Collect() {
         setMode('fetch');
     }
     return (
-        <div className='w-full h-full flex flex-col items-center justify-center collect-bg'>
+        <div className='w-full h-full min-h-max flex flex-col items-center justify-center collect-bg overflow-hidden'>
             <div className=
                 {`
-                        h-auto
+                        max-h-full overflow-y-auto
                         w-9/12 bsm:w-7/12 lg:w-5/12 xl:w-4/12
                         rounded-lg
                         flex flex-col items-center justify-start
                         select-none
+                        py-20
+                        no-scrollbar
                 `}
             >
                 { mode != 'verify' ? <DownloadApp /> : null}
                 <div className="w-full flex items-center justify-center p-4">
                     <h1 className={`
                         w-full text-center text-white
-                        text-4xl bsm:text-5xl md:text-5xl font-bold
+                        text-5xl bsm:text-6xl font-bold
                         ${teko.className}
-                    `}>TYA-SRMAP</h1>
+                    `}>TYA</h1>
                 </div>
                 
                 <hr className="w-11/12 border-gray-300 dark:border-gray-700" />
                 {mode == 'normal' ?
-                    <form onSubmit={(e) => handleSubmit(e)} className="w-full px-8 bsm:px-14 md:px-20 py-3 flex flex-col items-center gap-y-5">
+                    <form onSubmit={(e) => handleSubmit(e)} className="w-full px-8 bsm:px-14 md:px-20 py-3 flex flex-col items-center gap-y-4">
                         <div className="w-full">
                             <label htmlFor="username" className={`
                             block text-sm text-gray-500 light:text-gray-300 select-none
@@ -205,6 +208,22 @@ export default function Collect() {
                             <div>
                                 {"Use the same credentials you use to login to SRMAP's Parent Portal"}
                             </div>
+                        </div>
+                        <div className={`
+                            text-xs text-gray-500
+                            `}>
+                            {"By continuing, you acknowledge and accept our "}
+                            <Link href="/terms-of-service" className={`
+                                text-gray-100 hover:text-gray-300
+                                `}>
+                                {"Terms of Service "}
+                            </Link> 
+                            and 
+                            <Link href="/privacy-policy" className={`
+                                text-gray-100 hover:text-gray-300
+                                `}>
+                                {" Privacy Policy"}
+                            </Link>.
                         </div>
                         <button className={`
                         w-24 h-10

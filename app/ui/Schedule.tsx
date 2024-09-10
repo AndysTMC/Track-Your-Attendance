@@ -107,7 +107,7 @@ export default function Schedule() {
                     >
                         <div className={`
                                 w-4 h-4
-                                text-neutral-300
+                                text-zinc-300
                             `}
                         >
                             <MdSwipeLeft />

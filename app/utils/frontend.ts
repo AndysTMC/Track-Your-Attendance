@@ -129,32 +129,35 @@ export const getCurrentDayIndex = ():number => {
 }
 
 export const getPercent = (attendance: Attendance): number => {
-    const maxODML = Math.ceil(attendance.total * 0.15)
-    const ODMLTaken = attendance.odml;
-    const ODMLConsidered = Math.min(ODMLTaken, maxODML);
     const present = attendance.present;
     const absent = attendance.absent;
     const totalScheduled = present + absent;
-    const percent = (present + ODMLConsidered) / (totalScheduled) * 100;
+    const percent = present / (totalScheduled) * 100;
     return percent;
 }
 
-export const getAdditionalAttendanceRequired = (attendance: Attendance): number => {
-    const maxODML = Math.ceil(attendance.total * 0.15)
-    const ODMLTaken = attendance.odml;
-    const ODMLConsidered = Math.min(ODMLTaken, maxODML);
-    const present = attendance.present;
-    const absent = attendance.absent;
-    return Math.max(0, 3 * absent - present - 4 * ODMLConsidered);
-}
-
-export const getAbsencesAllowed = (attendance: Attendance): number => {
-    const maxODML = Math.ceil(attendance.total * 0.15);
-    const ODMLTaken = attendance.odml;
-    const ODMLConsidered = Math.min(ODMLTaken, maxODML);
+export const getSkipsLeft = (attendance: Attendance): number => {
     const absent = attendance.absent;
     const total = attendance.total;
-    return Math.max(0, Math.floor(ODMLConsidered + 0.25 * total - absent));
+    return Math.max(0, Math.floor(0.25 * total - absent));
+}
+
+export const getODMLConsidered = (attendance: Attendance): number => {
+    const maxODML = Math.ceil(attendance.total * 0.15);
+    const ODMLTaken = attendance.odml;
+    return Math.min(ODMLTaken, maxODML);
+}
+
+export const isSafe = (attendance: Attendance): boolean => {
+    const ODMLConsidered = getODMLConsidered(attendance);
+    const present = attendance.present;
+    const absent = attendance.absent;
+    const percentWOODML = present / (present + absent);
+    const percentWODML = (present + ODMLConsidered) / (present + absent);
+    if ((percentWOODML >= 0.75) || (percentWOODML >= 0.60 &&  percentWODML >= 0.75)) {
+        return true;
+    }
+    return false;
 }
 
 export const getPrettierIdentity = (profile: Profile): string =>  {
@@ -210,8 +213,8 @@ export const getPrettierAttendanceStats = (attendances: Array<Attendance>): stri
         result += 'Attendance-' + (i + 1) + '\n';
         result += 'Course Code: ' + attendances[i].courseCode + '\n';
         result += 'Percent: ' + getPercent(attendances[i]).toFixed(2) + '\n';
-        result += 'Add. Att. Req.: ' + getAdditionalAttendanceRequired(attendances[i]).toFixed(0) + '\n';
-        result += 'Ab. All.: ' + getAbsencesAllowed(attendances[i]).toFixed(0) + '\n\n';
+        result += 'Skips Left: ' + getSkipsLeft(attendances[i]) + '\n';
+        result += 'Status: ' + isSafe(attendances[i]) ? 'Safe' : 'Unsafe' + '\n\n';
     }
     return result;
 }
