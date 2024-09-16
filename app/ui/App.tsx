@@ -6,10 +6,9 @@ import Display from "./Display";
 
 export default function App() {
 	const dispatch = useDispatch<AppDispatch>();
-	const { inQueue, userData, error } = useSelector(
+	const { userData, error } = useSelector(
 		(state: RootState) => state.user
 	);
-
 	if (userData) {
 		return <Display />;
 	} else {

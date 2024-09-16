@@ -76,15 +76,30 @@ class OPS {
 	): Promise<void> {
 		await connectDB();
 		if (scrapeInProgress) {
+			const scrapeEntry = { regNo, addedTime: new Date() };
 			await SystemStateModel.updateOne(
 				{},
-				{ $push: { scrapesInProgress: regNo } }
+				{ $push: { scrapesInProgress: scrapeEntry } }
 			);
 		} else {
 			await SystemStateModel.updateOne(
 				{},
-				{ $pull: { scrapesInProgress: regNo } }
+				{ $pull: { scrapesInProgress: { regNo: regNo } } }
 			);
+		}
+	}
+
+	static async removeExpiredScrapes(): Promise<void> {
+		await connectDB();
+		const systemState = await SystemStateModel.findOne();
+		const scrapesInProgress = systemState.scrapesInProgress;
+		const now = new Date();
+		const expiredScrapes = scrapesInProgress.filter(
+			(scrape: any) =>
+				now.getTime() - new Date(scrape.addedTime).getTime() > 300000
+		);
+		for (const scrape of expiredScrapes) {
+			await this.updateUserScrapeProgress(scrape.regNo, false);
 		}
 	}
 
@@ -102,7 +117,7 @@ class OPS {
 
 	static async getHolidays(): Promise<Holiday[]> {
 		await connectDB();
-		return await HolidayModel.find();
+		return await HolidayModel.find({}, { _id: 0 });
 	}
 
 	static async addHoliday(date: string, name: string): Promise<void> {
@@ -123,7 +138,7 @@ class OPS {
 
 	static async getSpecialWorkingDays(): Promise<SpecialWorkingDay[]> {
 		await connectDB();
-		return await SpecialWorkingDayModel.find();
+		return await SpecialWorkingDayModel.find({}, { _id: 0 });
 	}
 
 	static async addSpecialWorkingDay(

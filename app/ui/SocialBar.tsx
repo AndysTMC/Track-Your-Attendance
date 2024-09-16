@@ -26,7 +26,7 @@ export default function SocialBar() {
                     cursor-pointer
                 `}
 					onClick={() =>
-						window.open("https://discord.gg/PfZC3bp5", "_blank")
+						window.open("https://discord.gg/RDC3bZbZKc", "_blank")
 					}
 					id="discord"
 				>

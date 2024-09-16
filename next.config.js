@@ -5,9 +5,5 @@ const withPWA = pwa({
 	dest: "public",
 });
 
-const nextConfig = withPWA({
-	experimental: {
-	  instrumentationHook: true,
-	},
-  });
+const nextConfig = withPWA();
 export default nextConfig;

@@ -14,16 +14,15 @@ import {
 } from "../utils/frontend";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { Timetable, Session } from "../utils/hybrid";
+import { Timetable, Session, SpecialWorkingDay } from "../utils/hybrid";
 import ScheduleSCard from "./ScheduleSCard";
 import { FSMethods } from "../utils/frontend";
 import CopyPaste from "./CopyPaste";
 import useEveryTime from "../hooks/EveryTime";
 
 export default function Schedule() {
-	const { inQueue, userData, error } = useSelector(
-		(state: RootState) => state.user
-	);
+	const { inQueue, userData, error, holidays, specialWorkingDays } =
+		useSelector((state: RootState) => state.user);
 	const [todayIndex, setTodayIndex] = useState(getCurrentDayIndex());
 	const [dayIndex, setDayIndex] = useState(getCurrentDayIndex());
 	const [todayScheduleDetails, setTodayScheduleDetails] =
@@ -42,16 +41,61 @@ export default function Schedule() {
 		() => setTodayIndex(getCurrentDayIndex),
 		86400000
 	);
+	const getStartOfWeek = () => {
+		const today = new Date();
+		const startOfWeek = new Date(today);
+		startOfWeek.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+		return startOfWeek;
+	};
+	const getAdjustedDayIndex = () => {
+		return dayIndex == 0 ? 6 : dayIndex - 1;
+	};
+	const getTargetDate = () => {
+		const startOfWeek = getStartOfWeek();
+		const targetDate = new Date(startOfWeek);
+		targetDate.setDate(startOfWeek.getDate() + getAdjustedDayIndex());
+		return targetDate;
+	};
+	const getCurrentSpecialWorkingDay = (): SpecialWorkingDay | undefined => {
+		const targetDateString = getTargetDate().toISOString().split("T")[0];
+		const specialWorkingDay = specialWorkingDays.find(
+			(specialDay) => specialDay.date === targetDateString
+		);
+		return specialWorkingDay;
+	};
 	useEffect(() => {
 		if (!userData) return;
-		const dayName: DayOfWeek = days[dayIndex] as DayOfWeek;
+		let dayName: DayOfWeek = days[dayIndex] as DayOfWeek;
+		const targetDateString = getTargetDate()
+				.toISOString()
+				.split("T")[0];
+		const holiday = holidays.find(
+			(holiday) => holiday.date == targetDateString
+		);
+		if (holiday) return;
+		const specialWorkingDay = getCurrentSpecialWorkingDay();
+		if (specialWorkingDay)
+			dayName = days[specialWorkingDay.replacementDay] as DayOfWeek;
 		const timetable: Timetable = userData.timetable;
 		const sessions = timetable[dayName];
 		const tempScheduleDetails: Array<FSession> = sessions.map(
 			(session: Session) => getSessionDetails(userData.courses, session)
 		);
 		setTodayScheduleDetails(tempScheduleDetails);
-	}, [userData, dayIndex]);
+	}, [userData, dayIndex, holidays, specialWorkingDays]);
+	const noScheduleMessage = () => {
+		if (holidays) {
+			const targetDateString = getTargetDate()
+				.toISOString()
+				.split("T")[0];
+			const holiday = holidays.find(
+				(holiday) => holiday.date == targetDateString
+			);
+			if (holiday)
+				return `There is a holiday on this day (${holiday.name})`;
+		}
+		return "No sessions are scheduled on this day";
+	};
 	return (
 		<div
 			className={`
@@ -111,7 +155,7 @@ export default function Schedule() {
                             w-auto h-auto
                             flex items-center justify-center
                             cursor-pointer
-                            active:bg-zinc-900
+							text-black active:text-zinc-900
                         `}
 						onClick={() => handleDayIndexChange(-1)}
 					>
@@ -119,7 +163,6 @@ export default function Schedule() {
 							className={`
                             w-8
                             h-8
-                            text-black
                             bg-white
                         `}
 						/>
@@ -168,7 +211,7 @@ export default function Schedule() {
                             w-auto h-auto
                             flex items-center justify-center
                             cursor-pointer
-                            active:bg-zinc-900
+							text-black active:text-zinc-900
                         `}
 						onClick={() => handleDayIndexChange(1)}
 					>
@@ -176,7 +219,6 @@ export default function Schedule() {
 							className={`
                             w-8
                             h-8
-                            text-black
                             bg-white
                         `}
 						/>
@@ -201,7 +243,7 @@ export default function Schedule() {
                                     rounded-lg
                                 `}
 						>
-							No sessions are scheduled on this day
+							{noScheduleMessage()}
 						</div>
 					) : (
 						<div

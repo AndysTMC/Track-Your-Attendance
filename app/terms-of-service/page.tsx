@@ -326,7 +326,7 @@ export default function Page() {
 						Terms and Conditions, please contact the developers via
 						the{" "}
 						<a
-							href="https://discord.gg/PfZC3bp5"
+							href="https://discord.gg/RDC3bZbZKc"
 							className="text-black underline font-bold"
 							target="_blank"
 						>

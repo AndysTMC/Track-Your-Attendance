@@ -1,26 +1,26 @@
 // /redux/userSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import { UserData } from "@/app/utils/hybrid";
+import { Holiday, SpecialWorkingDay, UserData } from "@/app/utils/hybrid";
 import { generateChecksum } from "@/app/utils/hybrid";
 import { clear } from "console";
 
 interface UserState {
-	inQueue: number;
 	userData: UserData | null;
 	error: string | null;
 	errorStatusCode: number | null;
+	holidays: Holiday[];
+	specialWorkingDays: SpecialWorkingDay[];
 	fetchInProgress: boolean;
-	requestProcessing: boolean;
 }
 
 const initialState: UserState = {
-	inQueue: -1,
 	userData: null,
 	error: null,
 	errorStatusCode: null,
 	fetchInProgress: false,
-	requestProcessing: false,
+	holidays: [],
+	specialWorkingDays: [],
 };
 
 export const scrape = createAsyncThunk(
@@ -67,69 +67,56 @@ const userSlice = createSlice({
 			localStorage.removeItem("TYASRMAPUDATA");
 			localStorage.removeItem("TYASRMAPREGNO");
 			localStorage.removeItem("TYASRMAPDKEY");
+			localStorage.removeItem("TYASRMAPHDATA");
+			localStorage.removeItem("TYASRMAPSWDATA");
 		},
 		exit: (state) => {
 			state.userData = null;
-			state.inQueue = -1;
 			state.error = null;
 		},
 		setError: (state, action) => {
 			state.error = action.payload;
+			state.errorStatusCode = 401;
 		},
 		clearError: (state) => {
 			state.error = null;
 			state.errorStatusCode = null;
 		},
-		setUserData: (state, action) => {
-			state.userData = action.payload;
-		},
-		setInQueueINF: (state) => {
-			state.inQueue = Infinity;
+		setData: (state, action) => {
+			state.userData = action.payload.userData;
+			state.holidays = action.payload.holidays;
+			state.specialWorkingDays = action.payload.specialWorkingDays;
 		},
 		setFetchInProgress: (state, action) => {
 			state.fetchInProgress = action.payload;
-		},
-		setRequestProcessing: (state, action) => {
-			state.requestProcessing = action.payload;
 		},
 	},
 	extraReducers: (builder) => {
 		builder
 			.addCase(scrape.fulfilled, (state, action) => {
-				state.requestProcessing = false;
+				state.fetchInProgress = false;
 				if (action.payload.error) {
 					state.error = action.payload.error;
 					state.errorStatusCode = action.payload.status;
-					state.inQueue = 0;
-					state.fetchInProgress = action.payload.inProgress;
-				} else if (action.payload.inQueue != null) {
-					state.inQueue = action.payload.inQueue;
-				} else if (action.payload.userData) {
-					state.fetchInProgress = false;
+				} else {
 					state.userData = action.payload.userData;
-					localStorage.setItem(
-						"TYASRMAPUDATA",
-						JSON.stringify(action.payload.userData)
-					);
+					state.holidays = action.payload.holidays;
+					state.specialWorkingDays = action.payload.specialWorkingDays;
+					localStorage.setItem("TYASRMAPUDATA", JSON.stringify(action.payload.userData));
+					localStorage.setItem("TYASRMAPHDATA", JSON.stringify(action.payload.holidays));
+					localStorage.setItem("TYASRMAPSWDATA", JSON.stringify(action.payload.specialWorkingDays));
 					localStorage.setItem("TYASRMAPDKEY", action.payload.dKey);
 					localStorage.setItem("TYASRMAPREGNO", action.payload.regNo);
 					state.error = null;
 					state.errorStatusCode = null;
-					state.inQueue = 0;
-				} else if (action.payload.dKey) {
-					localStorage.setItem("TYASRMAPDKEY", action.payload.dKey);
-					localStorage.setItem("TYASRMAPREGNO", action.payload.regNo);
-					state.error = null;
-					state.errorStatusCode = null;
-				}
+				} 
 			})
 			.addCase(scrape.rejected, (state, action) => {
-				state.requestProcessing = false;
+				state.fetchInProgress = false;
 				state.error = (action.payload as { error: string }).error;
 				state.errorStatusCode = (
 					action.payload as { status: number }
 				).status;
-				state.inQueue = 0;
 			});
 	},
 });
@@ -137,11 +124,9 @@ const userSlice = createSlice({
 export const {
 	exit,
 	clearLocalStorageData,
-	setUserData,
-	setInQueueINF,
+	setData,
 	setFetchInProgress,
 	clearError,
 	setError,
-	setRequestProcessing,
 } = userSlice.actions;
 export default userSlice.reducer;

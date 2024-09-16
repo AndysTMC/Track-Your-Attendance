@@ -218,7 +218,7 @@ export default function AttendanceStats() {
                                             flex justify-center items-center
                                         `}
 									>
-										{getPercent(attendance).toFixed(2) +
+										{attendance.presentPercent.toFixed(2) +
 											"%"}
 									</div>
 									<div
@@ -249,7 +249,7 @@ export default function AttendanceStats() {
                                             flex justify-center items-center
                                         `}
 									>
-										{getODMLPercent(attendance).toFixed(2) +
+										{attendance.odmlPercent.toFixed(2) +
 											"%"}
 									</div>
 									<div

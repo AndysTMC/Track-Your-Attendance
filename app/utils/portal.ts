@@ -419,7 +419,7 @@ const extractAttendancePage = async (
 					presentPercent,
 					odml,
 					odmlAppr,
-					percent,
+					odmlPercent,
 				] = $(el)
 					.find("td")
 					.map((_: any, el: any) => $(el).text().trim())
@@ -431,7 +431,9 @@ const extractAttendancePage = async (
 					totalScheduled: parseInt(totalScheduled ?? 0),
 					total: -1,
 					notEntered: parseInt(notEntered ?? 0),
+					presentPercent: parseFloat(presentPercent ?? 0),
 					odml: parseInt(odml ?? 0),
+					odmlPercent: parseFloat(odmlPercent ?? 0),
 				});
 			});
 		return attendanceInfo;

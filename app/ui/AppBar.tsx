@@ -1,19 +1,17 @@
 import { useState, useEffect } from "react";
 import { RxExit } from "react-icons/rx";
 import { ImQrcode } from "react-icons/im";
-import { BsFillPeopleFill } from "react-icons/bs";
+import { ThreeDots } from "react-loading-icons";
 import { GrDocumentUpdate } from "react-icons/gr";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../redux/store";
 import {
 	scrape,
 	exit,
-	setInQueueINF,
 	setFetchInProgress,
-	setRequestProcessing,
 	clearLocalStorageData,
+	clearError,
 } from "../redux/userSlice";
-import useEveryTime from "@/app/hooks/EveryTime";
 import Image from "next/image";
 
 export default function AppBar({
@@ -26,40 +24,30 @@ export default function AppBar({
 	const dispatch = useDispatch<AppDispatch>();
 	const maxRefetchCount = Number(process.env.MAX_REFETCH_COUNT || 5) ;
 	const {
-		inQueue,
 		userData,
-		error,
 		errorStatusCode,
 		fetchInProgress,
-		requestProcessing,
 	} = useSelector((state: RootState) => state.user);
-	const [refetchMode, setRefetchMode] = useState(false);
 	const [showQr, setShowQr] = useState(false);
-	const handleRefetchClick = () => {
-		if (!userData) return;
-		const regNo = localStorage.getItem("TYASRMAPREGNO") ?? null;
-		const dKey = localStorage.getItem("TYASRMAPDKEY") ?? null;
-		dispatch(setInQueueINF());
-		dispatch(setFetchInProgress(true));
-		dispatch(setRequestProcessing(true));
-		dispatch(scrape({ regNo, password: null, dKey, refetch: userData.scrapingInfo.refetchCount < maxRefetchCount }));
-		setRefetchMode(true);
-	};
 	const refetchUserData = async () => {
 		const regNo = localStorage.getItem("TYASRMAPREGNO") ?? null;
 		const dKey = localStorage.getItem("TYASRMAPDKEY") ?? null;
-		if (fetchInProgress == false) {
-			setRefetchMode(false);
-		} else {
-			if (!requestProcessing) {
-				dispatch(setRequestProcessing(true));
-				dispatch(
-					scrape({ regNo, password: null, dKey, refetch: false })
-				);
-			}
+		if (!regNo || !dKey) {
+			handleExit();
+			return;
 		}
+		if (userData && userData.scrapingInfo.refetchCount < 5) {
+			dispatch(scrape({ regNo, password: null, dKey, refetch: true }));
+		} else {
+			dispatch(scrape({ regNo, password: null, dKey, refetch: false }));
+		}
+		
 	};
-	const { setActive: setRefetching } = useEveryTime(refetchUserData, 1000);
+	const handleRefetchClick = () => {
+		if (!userData) return;
+		dispatch(setFetchInProgress(true));
+		refetchUserData();
+	};
 	const handleExit = () => {
 		dispatch(clearLocalStorageData());
 		dispatch(exit());
@@ -71,21 +59,10 @@ export default function AppBar({
 		) {
 			handleExit();
 		}
-		if (errorStatusCode && [200].includes(errorStatusCode)) {
-			setRefetchMode(false);
-		}
-		if (refetchMode) {
-			setRefetching(true);
-		}
-		if (!refetchMode) {
-			setRefetching(false);
-		}
 	}, [
 		dispatch,
-		refetchMode,
 		fetchInProgress,
 		errorStatusCode,
-		setRefetching,
 		handleExit
 	]);
 	return (
@@ -176,7 +153,7 @@ export default function AppBar({
 							/>
 							<h2 className="text-white text-ssm">Share</h2>
 						</div>
-						{refetchMode ? (
+						{fetchInProgress ? (
 							<div
 								className={`
                                 w-auto
@@ -189,21 +166,16 @@ export default function AppBar({
                                 cursor-wait
                                 `}
 							>
-								<div className="flex items-center justify-center gap-x-1">
-									<BsFillPeopleFill
+								<div className="flex items-center justify-center gap-x-1 mb-0.5">
+									<ThreeDots 
 										className={`
-                                        text-white
-                                        text-lg
-                                        `}
+											w-6
+											h-4
+										`}
 									/>
-									<h6 className="text-white text-sm">
-										{inQueue != Infinity
-											? Math.max(0, inQueue)
-											: "?"}
-									</h6>
 								</div>
 								<h2 className="text-white text-ssm">
-									In Queue
+									Fetching
 								</h2>
 							</div>
 						) : (

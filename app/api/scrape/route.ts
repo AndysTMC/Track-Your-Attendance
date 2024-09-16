@@ -1,81 +1,21 @@
 import { getPortal, scrape } from "@/app/utils/portal";
 import {
-	CANT_FETCH_C,
 	Credentials,
-	IN_MAINTENANCE_C,
 	INVALID_AUTH_C,
 	NEITHER_PASSWORD_NOR_DKEY_PROVIDED_C,
 	PLEASE_TRY_AGAIN_C,
-	Portal,
-	QueueItem,
 	REFETCH_LIMIT_REACHED_C,
 	REGNO_NOT_PROVIDED_C,
-	ScrapeData,
+	Portal,
 	SystemData,
 	User,
+	SERVER_IN_MAINTENANCE_C,
+	ScrapeData,
+	CANT_FETCH_C,
 } from "@/app/utils/backend";
-import { ScrapingInfo } from "@/app/utils/hybrid";
+import { ScrapingInfo, UserData } from "@/app/utils/hybrid";
 import OPS from "@/app/utils/db_ops";
 import { encrypt, decrypt } from "@/app/utils/backend";
-import { scrapeQueue } from "@/workers/scrape.worker";
-
-async function enqueueHelper(
-	regNo: string,
-	encryptedPassword: string,
-	refetch: boolean,
-	portal: Portal,
-	user: User | null,
-	systemData: SystemData
-) {
-	let credentials: Credentials = { regNo, encryptedPassword };
-	let item: QueueItem = { credentials, refetch, portal, user, systemData };
-	await scrapeQueue.add("scrapeItem", item);
-}
-
-// async function executeScrape(item: QueueItem) {
-// 	const regNo = item.credentials.regNo;
-// 	try {
-// 		let data: ScrapeData | null = null;
-// 		let scrapeRetryCount = 0;
-// 		let maxScrapeRetry = Number(process.env.MAX_SCRAPE_RETRY ?? 1);
-// 		while (!data && scrapeRetryCount < maxScrapeRetry) {
-// 			try {
-// 				data = await scrape(item.portal, item.systemData);
-// 			} catch (err: any) {
-// 				scrapeRetryCount++;
-// 			}
-// 		}
-// 		if (!data) {
-// 			throw new Error(CANT_FETCH_C);
-// 		}
-// 		if (item.user) {
-// 			const user = item.user;
-// 			const scrapingInfo = user.userData.scrapingInfo;
-// 			const previoslyScraped = new Date(scrapingInfo.lastScraped);
-// 			scrapingInfo.lastScraped = new Date().toISOString();
-// 			if (item.refetch) scrapingInfo.refetchCount++;
-// 			if (previoslyScraped.getDate() !== new Date().getDate())
-// 				scrapingInfo.refetchCount = 0;
-// 			user.userData = { ...data, scrapingInfo };
-// 			await OPS.addOrUpdateUser(item.credentials.regNo, user);
-// 		} else {
-// 			const scrapingInfo = {
-// 				lastScraped: new Date().toISOString(),
-// 				refetchCount: 0,
-// 			};
-// 			const userData: UserData = { ...data, scrapingInfo };
-// 			const user: User = {
-// 				userData,
-// 				userCredentials: item.credentials,
-// 			};
-// 			await OPS.addOrUpdateUser(item.credentials.regNo, user);
-// 		}
-// 	} catch (err: any) {
-// 		console.error(err);
-// 	} finally {
-// 		await OPS.updateUserScrapeProgress(regNo, false);
-// 	}
-// }
 
 const isRefetchPossible = (scrapingInfo: ScrapingInfo) => {
 	const maxRefetchCount = Number(process.env.MAX_REFETCH_LIMIT || 5);
@@ -125,30 +65,219 @@ const inCoolDownPeriod = (scrapingInfo: ScrapingInfo) => {
 	return false;
 };
 
-const isScrapeInProgress = (regNo: string, systemData: SystemData): boolean => {
-	if (systemData.scrapesInProgress.includes(regNo)) {
-		return true;
-	}
-	return false;
-};
+// export async function POST(request: Request): Promise<void | Response> {
+// 	let {
+// 		regNo,
+// 		password,
+// 		dKey,
+// 		refetch,
+// 	}: { regNo: string; password: string; dKey: string; refetch: boolean } =
+// 		await request.json();
+// 	const systemData = await OPS.getSystemData();
+// 	if (systemData.inMaintenance) {
+// 		return new Response(JSON.stringify({ error: SERVER_IN_MAINTENANCE_C }), {
+// 			status: 503,
+// 			headers: {
+// 				"Content-Type": "application/json",
+// 			},
+// 		});
+// 	}
+// 	if (!regNo) {
+// 		return new Response(JSON.stringify({ error: REGNO_NOT_PROVIDED_C }), {
+// 			status: 400,
+// 			headers: {
+// 				"Content-Type": "application/json",
+// 			},
+// 		});
+// 	}
+// 	if (password === null && dKey === null) {
+// 		return new Response(
+// 			JSON.stringify({ error: NEITHER_PASSWORD_NOR_DKEY_PROVIDED_C }),
+// 			{
+// 				status: 400,
+// 				headers: {
+// 					"Content-Type": "application/json",
+// 				},
+// 			}
+// 		);
+// 	}
+// 	if (await hasUserInQueue(regNo)) {
+// 		return new Response(
+// 			JSON.stringify({
+// 				inQueue: await inFrontOfUser(regNo),
+// 				inProgress: true,
+// 			}),
+// 			{
+// 				status: 200,
+// 				headers: {
+// 					"Content-Type": "application/json",
+// 				},
+// 			}
+// 		);
+// 	}
+// 	if (isScrapeInProgress(regNo, systemData)) {
+// 		return new Response(
+// 			JSON.stringify({
+// 				inQueue: 0,
+// 				inProgress: true,
+// 			}),
+// 			{
+// 				status: 200,
+// 				headers: {
+// 					"Content-Type": "application/json",
+// 				},
+// 			}
+// 		);
+// 	}
+// 	const user = await OPS.getUser(regNo);
+// 	const [_dKey, _password, _encryptedPassword] = getDKeyAndDEPs(
+// 		dKey,
+// 		password,
+// 		user?.userCredentials.encryptedPassword
+// 	);
+// 	if (user != null) {
+// 		if (refetch) {
+// 			if (!isRefetchPossible(user.userData.scrapingInfo)) {
+// 				return new Response(
+// 					JSON.stringify({ error: REFETCH_LIMIT_REACHED_C }),
+// 					{
+// 						status: 400,
+// 						headers: {
+// 							"Content-Type": "application/json",
+// 						},
+// 					}
+// 				);
+// 			}
+// 		}
+// 		let portal = await authenticateUser(regNo, _password);
+// 		if (portal == null) {
+// 			return new Response(JSON.stringify({ error: INVALID_AUTH_C }), {
+// 				status: 401,
+// 				headers: {
+// 					"Content-Type": "application/json",
+// 				},
+// 			});
+// 		}
+// 		if (!refetch && inCoolDownPeriod(user.userData.scrapingInfo)) {
+// 			await OPS.updateUserEncryptedPassword(regNo, _encryptedPassword);
+// 			const holidays = await OPS.getHolidays();
+// 			const specialWorkingDays = await OPS.getSpecialWorkingDays();
+// 			return new Response(
+// 				JSON.stringify({
+// 					userData: user.userData,
+// 					holidays,
+// 					specialWorkingDays,
+// 					dKey: _dKey,
+// 					regNo: regNo,
+// 				}),
+// 				{
+// 					status: 200,
+// 					headers: {
+// 						"Content-Type": "application/json",
+// 					},
+// 				}
+// 			);
+// 		}
+// 		await OPS.updateUserScrapeProgress(regNo, true);
+// 		user.userCredentials.encryptedPassword = _encryptedPassword;
+// 		await enqueueHelper(
+// 			regNo,
+// 			_encryptedPassword,
+// 			refetch,
+// 			portal,
+// 			user,
+// 			systemData
+// 		);
+// 		return new Response(JSON.stringify({ dKey: _dKey, regNo: regNo }), {
+// 			status: 200,
+// 			headers: {
+// 				"Content-Type": "application/json",
+// 			},
+// 		});
+// 	} else {
+// 		if (password) {
+// 			let portal = await authenticateUser(regNo, password);
+// 			if (portal == null) {
+// 				return new Response(JSON.stringify({ error: INVALID_AUTH_C }), {
+// 					status: 401,
+// 					headers: {
+// 						"Content-Type": "application/json",
+// 					},
+// 				});
+// 			}
+// 			await OPS.updateUserScrapeProgress(regNo, true);
+// 			await enqueueHelper(
+// 				regNo,
+// 				_encryptedPassword,
+// 				refetch,
+// 				portal,
+// 				null,
+// 				systemData
+// 			);
+// 			return new Response(JSON.stringify({ regNo: regNo, dKey: _dKey }), {
+// 				status: 200,
+// 				headers: {
+// 					"Content-Type": "application/json",
+// 				},
+// 			});
+// 		}
+// 		return new Response(JSON.stringify({ error: PLEASE_TRY_AGAIN_C }), {
+// 			status: 500,
+// 			headers: {
+// 				"Content-Type": "application/json",
+// 			},
+// 		});
+// 	}
+// }
 
-const inFrontOfUser = async (regNo: string): Promise<number> => {
-	const jobs = await scrapeQueue.getJobs(["waiting"]);
-	if (jobs.length === 0) {
-		return 0;
-	}
-	return jobs.findIndex((job) => job.data.credentials.regNo === regNo) + 1;
-}
+// credentials, refetch, portal, user, systemData
 
-const hasUserInQueue = async (regNo: string): Promise<boolean> => {
-	const jobs = await scrapeQueue.getJobs(["waiting"]);
-	for (let job of jobs) {
-		if (job.data.credentials.regNo === regNo) {
-			return true;
+export const processScrape = async (
+	credentials: Credentials,
+	refetch: boolean,
+	portal: Portal,
+	user: User | null,
+	systemData: SystemData
+) => {
+	try {
+		let data: ScrapeData | null = null;
+		let scrapeRetryCount = 0;
+		let maxScrapeRetry = Number(process.env.MAX_SCRAPE_RETRY ?? 1);
+		while (!data && scrapeRetryCount < maxScrapeRetry) {
+			try {
+				data = await scrape(portal, systemData);
+			} catch (err: any) {
+				scrapeRetryCount++;
+			}
 		}
+		if (!data) {
+			throw new Error(CANT_FETCH_C);
+		}
+		if (user) {
+			const scrapingInfo = user.userData.scrapingInfo;
+			const previoslyScraped = new Date(scrapingInfo.lastScraped);
+			scrapingInfo.lastScraped = new Date().toISOString();
+			if (refetch) scrapingInfo.refetchCount++;
+			if (previoslyScraped.getDate() !== new Date().getDate())
+				scrapingInfo.refetchCount = 0;
+			user.userData = { ...data, scrapingInfo };
+			await OPS.addOrUpdateUser(credentials.regNo, user);
+		} else {
+			const scrapingInfo = {
+				lastScraped: new Date().toISOString(),
+				refetchCount: 0,
+			};
+			const userData: UserData = { ...data, scrapingInfo };
+			const user: User = {
+				userData,
+				userCredentials: credentials,
+			};
+			await OPS.addOrUpdateUser(credentials.regNo, user);
+		}
+	} catch (err: any) {
+		console.error(err);
 	}
-	return false;
-}
+};
 
 export async function POST(request: Request): Promise<void | Response> {
 	let {
@@ -160,12 +289,15 @@ export async function POST(request: Request): Promise<void | Response> {
 		await request.json();
 	const systemData = await OPS.getSystemData();
 	if (systemData.inMaintenance) {
-		return new Response(JSON.stringify({ error: IN_MAINTENANCE_C }), {
-			status: 503,
-			headers: {
-				"Content-Type": "application/json",
-			},
-		});
+		return new Response(
+			JSON.stringify({ error: SERVER_IN_MAINTENANCE_C }),
+			{
+				status: 503,
+				headers: {
+					"Content-Type": "application/json",
+				},
+			}
+		);
 	}
 	if (!regNo) {
 		return new Response(JSON.stringify({ error: REGNO_NOT_PROVIDED_C }), {
@@ -180,34 +312,6 @@ export async function POST(request: Request): Promise<void | Response> {
 			JSON.stringify({ error: NEITHER_PASSWORD_NOR_DKEY_PROVIDED_C }),
 			{
 				status: 400,
-				headers: {
-					"Content-Type": "application/json",
-				},
-			}
-		);
-	}
-	if (await hasUserInQueue(regNo)) {
-		return new Response(
-			JSON.stringify({
-				inQueue: await inFrontOfUser(regNo),
-				inProgress: true,
-			}),
-			{
-				status: 200,
-				headers: {
-					"Content-Type": "application/json",
-				},
-			}
-		);
-	}
-	if (isScrapeInProgress(regNo, systemData)) {
-		return new Response(
-			JSON.stringify({
-				inQueue: 0,
-				inProgress: true,
-			}),
-			{
-				status: 200,
 				headers: {
 					"Content-Type": "application/json",
 				},
@@ -244,10 +348,14 @@ export async function POST(request: Request): Promise<void | Response> {
 			});
 		}
 		if (!refetch && inCoolDownPeriod(user.userData.scrapingInfo)) {
+			const holidays = await OPS.getHolidays();
+			const specialWorkingDays = await OPS.getSpecialWorkingDays();
 			await OPS.updateUserEncryptedPassword(regNo, _encryptedPassword);
 			return new Response(
 				JSON.stringify({
 					userData: user.userData,
+					holidays,
+					specialWorkingDays,
 					dKey: _dKey,
 					regNo: regNo,
 				}),
@@ -259,49 +367,34 @@ export async function POST(request: Request): Promise<void | Response> {
 				}
 			);
 		}
-		await OPS.updateUserScrapeProgress(regNo, true);
-		user.userCredentials.encryptedPassword = _encryptedPassword;
-		await enqueueHelper(
-			regNo,
-			_encryptedPassword,
-			refetch,
-			portal,
-			user,
-			systemData
-		);
-		return new Response(JSON.stringify({ dKey: _dKey, regNo: regNo }), {
-			status: 200,
-			headers: {
-				"Content-Type": "application/json",
-			},
-		});
+		let credentials = { regNo, encryptedPassword: _encryptedPassword };
+		await processScrape(credentials, refetch, portal, user, systemData);
 	} else {
-		if (password) {
-			let portal = await authenticateUser(regNo, password);
-			if (portal == null) {
-				return new Response(JSON.stringify({ error: INVALID_AUTH_C }), {
-					status: 401,
-					headers: {
-						"Content-Type": "application/json",
-					},
-				});
-			}
-			await OPS.updateUserScrapeProgress(regNo, true);
-			await enqueueHelper(
-				regNo,
-				_encryptedPassword,
-				refetch,
-				portal,
-				null,
-				systemData
-			);
-			return new Response(JSON.stringify({ regNo: regNo, dKey: _dKey }), {
-				status: 200,
+		if (!password) {
+			return new Response(JSON.stringify({ error: PLEASE_TRY_AGAIN_C }), {
+				status: 500,
 				headers: {
 					"Content-Type": "application/json",
 				},
 			});
 		}
+		let portal = await authenticateUser(regNo, password);
+		if (portal == null) {
+			return new Response(JSON.stringify({ error: INVALID_AUTH_C }), {
+				status: 401,
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+		}
+		let credentials: Credentials = {
+			regNo,
+			encryptedPassword: _encryptedPassword,
+		};
+		await processScrape(credentials, false, portal, null, systemData);
+	}
+	const userNew = await OPS.getUser(regNo);
+	if (!userNew) {
 		return new Response(JSON.stringify({ error: PLEASE_TRY_AGAIN_C }), {
 			status: 500,
 			headers: {
@@ -309,4 +402,21 @@ export async function POST(request: Request): Promise<void | Response> {
 			},
 		});
 	}
+	const holidays = await OPS.getHolidays();
+	const specialWorkingDays = await OPS.getSpecialWorkingDays();
+	return new Response(
+		JSON.stringify({
+			userData: userNew.userData,
+			holidays,
+			specialWorkingDays,
+			dKey: _dKey,
+			regNo: regNo,
+		}),
+		{
+			status: 200,
+			headers: {
+				"Content-Type": "application/json",
+			},
+		}
+	);
 }

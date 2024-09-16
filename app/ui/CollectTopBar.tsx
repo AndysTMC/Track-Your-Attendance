@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { MdOutlineDownload } from "react-icons/md";
+import { FaDiscord } from "react-icons/fa";
 
 interface BeforeInstallPromptEvent extends Event {
 	readonly platforms: string[];
@@ -16,7 +17,7 @@ declare global {
 	}
 }
 
-export default function DownloadApp() {
+export default function CollectTopBar() {
 	const [deferredPrompt, setDeferredPrompt] =
 		useState<BeforeInstallPromptEvent | null>(null);
 
@@ -48,27 +49,45 @@ export default function DownloadApp() {
 	};
 
 	return (
-		<div className="fixed w-full h-auto top-0 flex flex-col items-center py-4">
+		<div className="fixed w-full h-auto top-0 flex flex-row justify-end items-center py-4 gap-x-2 px-2">
 			{deferredPrompt ? (
 				<div
 					className={`
-          w-auto absolute right-4
-          flex flex-row items-center justify-center gap-x-2
-          bg-white
-          text-black
-          rounded-full
-          py-1 px-4
-          shadow-lg hover:shadow-neutral-400
-          cursor-pointer
-        `}
+					w-auto
+					flex flex-row items-center justify-center gap-x-2
+					bg-white
+					text-black
+					rounded-full
+					py-1 px-4
+					shadow-lg hover:shadow-neutral-500
+					cursor-pointer
+					`}
 					onClick={handleInstallClick}
 				>
-					<h2 className={`text-base bsm:text-xl font-bold`}>
+					<h2 className={`text-base bsm:text-lg font-bold`}>
 						Download App
 					</h2>
-					<MdOutlineDownload className={`text-lg bsm:text-2xl`} />
+					<MdOutlineDownload className={`text-base bsm:text-lg`} />
 				</div>
 			) : null}
+			<div
+				className={`
+                    flex flex-row justify-center items-center gap-x-2
+                    bg-white
+					text-black
+					rounded-full
+					py-1 px-4
+                    cursor-pointer
+					shadow-lg hover:shadow-neutral-500
+                `}
+				onClick={() =>
+					window.open("https://discord.gg/RDC3bZbZKc", "_blank")
+				}
+				id="discord"
+			>
+				<FaDiscord className="text-base bsm:text-2xl" />
+				<h2 className="font-bold text-base bsm:text-lg">Support</h2>
+			</div>
 		</div>
 	);
 }

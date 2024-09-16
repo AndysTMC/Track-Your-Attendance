@@ -306,7 +306,7 @@ export default function Page() {
 								<span className="font-bold">Contact:</span> You
 								can reach out to us via the{" "}
 								<a
-									href="https://discord.gg/PfZC3bp5"
+									href="https://discord.gg/RDC3bZbZKc"
 									className="text-black underline font-bold"
 									target="_blank"
 								>

@@ -277,11 +277,11 @@ export const getPrettierAttendanceStats = (
 	for (let i = 0; i < attendances.length; i++) {
 		result += "Attendance-" + (i + 1) + "\n";
 		result += "Course Code: " + attendances[i].courseCode + "\n";
-		result += "Percent: " + getPercent(attendances[i]).toFixed(2) + "\n";
+		result += "Percent: " + attendances[i].presentPercent.toFixed(2) + "\n";
 		result += "Usable ODML: " + getODMLConsidered(attendances[i]) + "\n";
 		result +=
 			"Percent (ODML incl.): " +
-			getODMLPercent(attendances[i]).toFixed(2) +
+			attendances[i].odmlPercent.toFixed(2) +
 			"\n";
 		result += "Total: " + attendances[i].total + "\n";
 		result += "Skips Left: " + getSkipsLeft(attendances[i]) + "\n";

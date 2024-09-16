@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { Course, Session, Timetable } from "../utils/hybrid";
+import {
+	Course,
+	Holiday,
+	Session,
+	SpecialWorkingDay,
+	Timetable,
+} from "../utils/hybrid";
 import {
 	FTime,
 	FSession,
@@ -12,14 +18,14 @@ import {
 	getSessionDetails,
 	DayOfWeek,
 	getPrettierSessions,
+	days,
 } from "../utils/frontend";
 import CopyPaste from "./CopyPaste";
 import useEveryTime from "../hooks/EveryTime";
 
 export default function Sessions() {
-	const { inQueue, userData, error } = useSelector(
-		(state: RootState) => state.user
-	);
+	const { inQueue, userData, error, holidays, specialWorkingDays } =
+		useSelector((state: RootState) => state.user);
 	const [sessionMode, setSessionMode] = useState("ongoing");
 	const [sessionDetails, setSessionDetails] = useState<FSession | null>(null);
 	const [onGoingSessionIndex, setOnGoingSessionIndex] = useState(-1);
@@ -42,18 +48,39 @@ export default function Sessions() {
 			clearInterval(interval);
 		};
 	}, [curTime, curFTime]);
+	const getTodaysHoliday = (): Holiday | undefined => {
+		if (!holidays) return undefined;
+		const today = new Date().toISOString().split("T")[0];
+		const holiday = holidays.find((holiday) => holiday.date === today);
+		return holiday;
+	};
+	const getTodaysSpecialWorkingDay = (): SpecialWorkingDay | undefined => {
+		if (!specialWorkingDays) return undefined;
+		const today = new Date().toISOString().split("T")[0];
+		const specialWorkingDay = specialWorkingDays.find(
+			(swd) => swd.date === today
+		);
+		return specialWorkingDay;
+	};
 	const getNoSessionsMessage = (): string => {
+		const holiday = getTodaysHoliday();
+		if (holiday) return `Today is a holiday (${holiday.name})`;
 		if (userData === null) return "No data available";
 		const todaySessions = userData.timetable[getCurrentDayOfWeek()];
 		if (todaySessions.length === 0) return "Today is session-free";
-		if (upcomingSessionIndex == -1 && onGoingSessionIndex)
+		if (upcomingSessionIndex == -1 && onGoingSessionIndex == -1)
 			return "Everything's wrapped up";
 		else if (onGoingSessionIndex == -1)
 			return "No active sessions at the moment";
 		return "Everything's going to be wrapped up just right.";
 	};
 	const updateSessionIndices = () => {
-		if (!userData || (sessionDetails && sessionDetails.timeLeft > 0))
+		const isHoliday = getTodaysHoliday() == undefined ? false : true;
+		if (
+			!userData ||
+			(sessionDetails && sessionDetails.timeLeft > 0) ||
+			isHoliday
+		)
 			return;
 		const dayName: DayOfWeek = getCurrentDayOfWeek();
 		const timetable: Timetable = userData.timetable;
@@ -65,7 +92,10 @@ export default function Sessions() {
 	};
 	const updateSessionDetails = () => {
 		if (!userData) return;
-		const dayName: DayOfWeek = getCurrentDayOfWeek();
+		let dayName: DayOfWeek = getCurrentDayOfWeek();
+		const specialWorkingDay = getTodaysSpecialWorkingDay();
+		if (specialWorkingDay)
+			dayName = days[specialWorkingDay.replacementDay] as DayOfWeek;
 		const timetable: Timetable = userData.timetable;
 		const currentDaySessions = timetable[dayName];
 		let sessionIndex =
@@ -90,12 +120,19 @@ export default function Sessions() {
 			setSecondActive(false), setMinuteActive(false);
 		};
 	}, [setSecondActive, setMinuteActive]);
-	useEffect(updateSessionIndices, [sessionDetails, userData]);
+	useEffect(updateSessionIndices, [
+		sessionDetails,
+		userData,
+		holidays,
+		specialWorkingDays,
+	]);
 	useEffect(updateSessionDetails, [
 		onGoingSessionIndex,
 		upcomingSessionIndex,
 		sessionMode,
 		userData,
+		holidays,
+		specialWorkingDays,
 	]);
 	useEffect(() => {
 		if (!sessionDetails) return;
@@ -116,7 +153,7 @@ export default function Sessions() {
 		return () => {
 			clearInterval(interval);
 		};
-	}, [sessionDetails, sessionMode, userData]);
+	}, [sessionDetails, sessionMode, userData, holidays, specialWorkingDays]);
 	return (
 		<div
 			className={`
@@ -260,7 +297,7 @@ export default function Sessions() {
                                 `}
 						>
 							<div className="text-ssm">
-								Duration{" (H:M, 24h)"}
+								Duration{" (hh:mm, 12h)"}
 							</div>
 							<div className="text-sm text-nowrap">
 								{FSMethods.getDurationString(
@@ -277,7 +314,7 @@ export default function Sessions() {
                                         `}
 							>
 								<div className="text-ssm">
-									Time Left {" (H:M:S)"}
+									Time Left {" (hh:mm:ss)"}
 								</div>
 								<div className="text-sm text-nowrap animate-bounce">
 									{FSMethods.getTimeLeftString(

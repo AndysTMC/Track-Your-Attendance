@@ -8,11 +8,9 @@ import {
 	clearLocalStorageData,
 	exit,
 	scrape,
+	setData,
 	setError,
 	setFetchInProgress,
-	setInQueueINF,
-	setRequestProcessing,
-	setUserData,
 } from "../redux/userSlice";
 import { BsFillPeopleFill } from "react-icons/bs";
 import { UserData, generateChecksum } from "@/app/utils/hybrid";
@@ -21,19 +19,33 @@ import { FaCircleCheck } from "react-icons/fa6";
 import Snackbar from "@mui/material/Snackbar";
 import AdminArea from "./AdminArea";
 import { setNavigateToAdminControl } from "../redux/adminSlice";
-import DownloadApp from "./DownloadApp";
+import CollectTopBar from "./CollectTopBar";
 import useEveryTime from "../hooks/EveryTime";
 import { BsInfo } from "react-icons/bs";
 import Link from "next/link";
+import { ThreeDots } from "react-loading-icons"
 
-const getUserDataLocal = async (): Promise<UserData | null> => {
+const getDataLocal = async (): Promise<Object | null> => {
 	try {
 		let userDataLocalString: string | null =
 			localStorage.getItem("TYASRMAPUDATA") ?? null;
 		let regNo: string | null =
 			localStorage.getItem("TYASRMAPREGNO") ?? null;
-		if (userDataLocalString && regNo) {
-			let checksum = generateChecksum(userDataLocalString);
+		let holidaysString = localStorage.getItem("TYASRMAPHDATA") ?? null;
+		let specialWorkingDaysString =
+			localStorage.getItem("TYASRMAPSWDATA") ?? null;
+		if (
+			userDataLocalString &&
+			regNo &&
+			holidaysString &&
+			specialWorkingDaysString
+		) {
+			let userData = JSON.parse(userDataLocalString);
+			let holidays = JSON.parse(holidaysString);
+			let specialWorkingDays = JSON.parse(specialWorkingDaysString);
+			let checksum = generateChecksum(
+				JSON.stringify({ userData, holidays, specialWorkingDays })
+			);
 			let response = await axios.post(
 				"/api/verify",
 				{ regNo, checksum },
@@ -44,7 +56,7 @@ const getUserDataLocal = async (): Promise<UserData | null> => {
 				}
 			);
 			if (response.data.isValid) {
-				return JSON.parse(userDataLocalString);
+				return { userData, holidays, specialWorkingDays };
 			}
 		}
 		return null;
@@ -53,30 +65,19 @@ const getUserDataLocal = async (): Promise<UserData | null> => {
 	}
 };
 
-const necessaryDataExists = (): boolean => {
-	let userDataLocalString: string | null =
-		localStorage.getItem("TYASRMAPUDATA") ?? null;
-	let regNo: string | null = localStorage.getItem("TYASRMAPREGNO") ?? null;
-	return userDataLocalString && regNo ? true : false;
-};
-
 export default function Collect() {
 	const dispatch = useDispatch<AppDispatch>();
 	const router = useRouter();
-	const {
-		inQueue,
-		userData,
-		error,
-		errorStatusCode,
-		fetchInProgress,
-		requestProcessing,
-	} = useSelector((state: RootState) => state.user);
+	const { userData, error, errorStatusCode, fetchInProgress } = useSelector(
+		(state: RootState) => state.user
+	);
 	const { adminError, adminErrorStatusCode, navigateToAdminControl } =
 		useSelector((state: RootState) => state.admin);
 	const [regNo, setRegNo] = useState("");
 	const [password, setPassword] = useState("");
 	const [mode, setMode] = useState("verify");
 	const handleClose = () => dispatch(clearError());
+
 	const fetchUserData = async () => {
 		let dKey = localStorage.getItem("TYASRMAPDKEY") ?? null;
 		if (
@@ -87,10 +88,6 @@ export default function Collect() {
 			dispatch(clearLocalStorageData());
 			dispatch(clearError());
 		} else {
-			if (requestProcessing) {
-				return;
-			}
-			dispatch(setRequestProcessing(true));
 			if (dKey == null || errorStatusCode == 200) {
 				dispatch(
 					scrape({ regNo, password, dKey: null, refetch: false })
@@ -102,35 +99,38 @@ export default function Collect() {
 			}
 		}
 	};
-	const { setActive: setFetching } = useEveryTime(fetchUserData, 1000);
+
 	useEffect(() => {
 		if (navigateToAdminControl && mode == "normal") {
 			router.replace("/admin");
 		}
 	}, [navigateToAdminControl, router, mode]);
+
 	useEffect(() => {
-		if (mode == "normal") {
-			setFetching(false);
-		}
-		if (mode == "fetch") {
-			setFetching(true);
-		}
 		if (mode === "verify") {
 			dispatch(setNavigateToAdminControl(false));
 			const verifyUserData = async () => {
-				const userDataLocal = await getUserDataLocal();
-				if (userDataLocal) {
-					dispatch(setUserData(userDataLocal));
+				const dataLocal = await getDataLocal();
+				if (dataLocal) {
+					dispatch(setData(dataLocal));
 				} else {
 					setMode("normal");
-					localStorage.removeItem("TYASRMAPUDATA");
-					localStorage.removeItem("TYASRMAPREGNO");
-					localStorage.removeItem("TYASRMAPDKEY");
+					dispatch(clearLocalStorageData());
 				}
 			};
 			verifyUserData();
 		}
-	}, [dispatch, mode, userData, error, setFetching]);
+	}, [dispatch, mode, userData, error]);
+
+	useEffect(() => {
+		if (fetchInProgress) {
+			setMode("fetch");
+			fetchUserData();
+		}
+		if (errorStatusCode !== null && [400, 401, 500, 503].includes(errorStatusCode)) {
+			setMode("normal")
+		}
+	}, [fetchInProgress]);
 
 	const validateUsername = (username: string): boolean => {
 		if (username.length < 12)
@@ -154,9 +154,7 @@ export default function Collect() {
 			dispatch(setError(err.message));
 			return;
 		}
-		dispatch(setInQueueINF());
 		dispatch(setFetchInProgress(true));
-		setMode("fetch");
 	};
 	return (
 		<div className="w-full h-full min-h-max flex flex-col items-center justify-center collect-bg overflow-hidden">
@@ -171,7 +169,7 @@ export default function Collect() {
                         no-scrollbar
                 `}
 			>
-				{mode != "verify" ? <DownloadApp /> : null}
+				{mode != "verify" ? <CollectTopBar /> : null}
 				<div className="w-full flex items-center justify-center p-4">
 					<h1
 						className={`
@@ -316,20 +314,20 @@ export default function Collect() {
 				) : mode == "fetch" ? (
 					<div className="w-full p-2 bsm:p-8 flex flex-row items-center justify-center text-base text-white bsm:text-xl gap-x-2 select-none">
 						<div className="h-10 flex flex-row items-center gap-x-2 animate-pulse">
-							<BsFillPeopleFill
+							<ThreeDots 
+								stroke="#98ff98" strokeOpacity={.125} speed={.75}
 								className={`
-                                w-7 bsm:w-10
-                                h-7 bsm:h-10
-                            `}
+									w-8 bsm:w-10
+									h-8 bsm:h-10
+								`}
 							/>
-							{inQueue != Infinity ? Math.max(0, inQueue) : "?"}
 						</div>
-						<h3>in queue. Stand by.</h3>
+						<h3>Fetching</h3>
 					</div>
 				) : mode == "verify" ? (
 					<div className="w-full p-8 flex flex-row items-center justify-center text-xl text-white gap-x-2 select-none">
 						<FaCircleCheck className="w-5 h-5" />
-						<h3>Verifying..</h3>
+						<h3>Verifying</h3>
 					</div>
 				) : null}
 			</div>

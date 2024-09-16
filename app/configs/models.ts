@@ -42,7 +42,9 @@ const AttendanceSchema = new Schema({
 	totalScheduled: { type: Number, required: true },
 	total: { type: Number, required: true },
 	notEntered: { type: Number, required: true },
+	presentPercent: { type: Number, required: true },
 	odml: { type: Number, required: true },
+	odmlPercent: { type: Number, required: true },
 });
 
 const CourseSchema = new Schema({
@@ -101,7 +103,15 @@ const SystemStateSchema = new Schema(
 		semStartDate: { type: String, default: "" },
 		semEndDate: { type: String, default: "" },
 		adminKey: { type: String, default: "" },
-		scrapesInProgress: { type: [String], default: [] },
+		scrapesInProgress: {
+			type: [
+				{
+					regNo: String,
+					addedTime: { type: Date, default: Date.now },
+				},
+			],
+			default: [],
+		},
 	},
 	{ versionKey: false }
 );

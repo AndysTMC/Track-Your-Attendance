@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { inter } from "@/app/fonts";
 import "./globals.css";
+import GoogleAnalytics from "@/app/GoogleAnalytics";
 
 // Suppress console.warn
 console.warn = () => {};
@@ -21,6 +22,12 @@ export default function RootLayout({
 	return (
 		<html lang="en" suppressHydrationWarning={true}>
 			<head>
+				<GoogleAnalytics />
+				<script
+					async
+					src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2535517928398199"
+					crossOrigin="anonymous"
+				></script>
 				<link
 					rel="manifest"
 					href="/manifest.json"

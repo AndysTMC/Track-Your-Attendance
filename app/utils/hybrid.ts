@@ -46,7 +46,9 @@ export type Attendance = {
 	totalScheduled: number;
 	total: number;
 	notEntered: number;
+	presentPercent: number;
 	odml: number;
+	odmlPercent: number;
 };
 
 export type Course = {
