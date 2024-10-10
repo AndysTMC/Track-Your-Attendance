@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RxExit } from "react-icons/rx";
 import { ImQrcode } from "react-icons/im";
 import { ThreeDots } from "react-loading-icons";
@@ -48,10 +48,11 @@ export default function AppBar({
 		dispatch(setFetchInProgress(true));
 		refetchUserData();
 	};
-	const handleExit = () => {
+	const handleExit = useCallback(() => {
 		dispatch(clearLocalStorageData());
 		dispatch(exit());
-	}
+	}, [dispatch]);
+	
 	useEffect(() => {
 		if (
 			errorStatusCode != null &&

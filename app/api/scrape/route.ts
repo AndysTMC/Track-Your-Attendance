@@ -231,8 +231,7 @@ const inCoolDownPeriod = (scrapingInfo: ScrapingInfo) => {
 // }
 
 // credentials, refetch, portal, user, systemData
-
-export const processScrape = async (
+const processScrape = async (
 	credentials: Credentials,
 	refetch: boolean,
 	portal: Portal,

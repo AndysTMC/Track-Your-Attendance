@@ -7,7 +7,7 @@ import CopyPaste from "./CopyPaste";
 import { getPrettierCoursesOverview } from "../utils/frontend";
 
 export default function CoursesDB() {
-	const { inQueue, userData, error } = useSelector(
+	const { userData, error } = useSelector(
 		(state: RootState) => state.user
 	);
 	const [coursesDetails, setCoursesDetails] = useState<Course[]>([]);

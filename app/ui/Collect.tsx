@@ -130,7 +130,7 @@ export default function Collect() {
 		if (errorStatusCode !== null && [400, 401, 500, 503].includes(errorStatusCode)) {
 			setMode("normal")
 		}
-	}, [fetchInProgress]);
+	}, [fetchInProgress, errorStatusCode, fetchUserData]);
 
 	const validateUsername = (username: string): boolean => {
 		if (username.length < 12)

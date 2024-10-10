@@ -6,7 +6,7 @@ import CopyPaste from "./CopyPaste";
 
 export default function Identity() {
 	const dispatch = useDispatch<AppDispatch>();
-	const { inQueue, userData, error } = useSelector(
+	const { userData, error } = useSelector(
 		(state: RootState) => state.user
 	);
 	const { name, gender, dob, year, semester, section, program } =

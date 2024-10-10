@@ -21,7 +21,7 @@ import CopyPaste from "./CopyPaste";
 import useEveryTime from "../hooks/EveryTime";
 
 export default function Schedule() {
-	const { inQueue, userData, error, holidays, specialWorkingDays } =
+	const { userData, error, holidays, specialWorkingDays } =
 		useSelector((state: RootState) => state.user);
 	const [todayIndex, setTodayIndex] = useState(getCurrentDayIndex());
 	const [dayIndex, setDayIndex] = useState(getCurrentDayIndex());
@@ -82,7 +82,7 @@ export default function Schedule() {
 			(session: Session) => getSessionDetails(userData.courses, session)
 		);
 		setTodayScheduleDetails(tempScheduleDetails);
-	}, [userData, dayIndex, holidays, specialWorkingDays]);
+	}, [userData, dayIndex, holidays, specialWorkingDays, getCurrentSpecialWorkingDay, getTargetDate]);
 	const noScheduleMessage = () => {
 		if (holidays) {
 			const targetDateString = getTargetDate()

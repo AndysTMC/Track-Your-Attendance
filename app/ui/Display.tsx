@@ -13,7 +13,7 @@ import SocialBar from "./SocialBar";
 
 export default function Display() {
 	const dispatch = useDispatch<AppDispatch>();
-	const { inQueue, userData, error, errorStatusCode } = useSelector(
+	const { userData, error, errorStatusCode } = useSelector(
 		(state: RootState) => state.user
 	);
 	const [backgroundDim, setBackgroundDim] = useState(false);

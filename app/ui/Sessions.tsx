@@ -24,7 +24,7 @@ import CopyPaste from "./CopyPaste";
 import useEveryTime from "../hooks/EveryTime";
 
 export default function Sessions() {
-	const { inQueue, userData, error, holidays, specialWorkingDays } =
+	const { userData, holidays, specialWorkingDays } =
 		useSelector((state: RootState) => state.user);
 	const [sessionMode, setSessionMode] = useState("ongoing");
 	const [sessionDetails, setSessionDetails] = useState<FSession | null>(null);
@@ -125,6 +125,7 @@ export default function Sessions() {
 		userData,
 		holidays,
 		specialWorkingDays,
+		getTodaysHoliday,
 	]);
 	useEffect(updateSessionDetails, [
 		onGoingSessionIndex,
@@ -133,6 +134,7 @@ export default function Sessions() {
 		userData,
 		holidays,
 		specialWorkingDays,
+		getTodaysSpecialWorkingDay
 	]);
 	useEffect(() => {
 		if (!sessionDetails) return;
