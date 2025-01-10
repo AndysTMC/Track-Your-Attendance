@@ -15,10 +15,14 @@ export default function Properties() {
 		semStartDate: "",
 		semEndDate: "",
 		inMaintenance: false,
+		isAvailable: false,
 	});
 	const handleChangeInMaintenance = () => {
 		setFormData({ ...formData, inMaintenance: !formData.inMaintenance });
 	};
+	const handleChangeIsAvailable = () => {
+		setFormData({ ...formData, isAvailable: !formData.isAvailable });
+	}
 	const handleUpdateProperties = () => {
 		if (
 			(adminData && formData.semStartDate === "") ||
@@ -30,6 +34,7 @@ export default function Properties() {
 				semStartDate: formData.semStartDate,
 				semEndDate: formData.semEndDate,
 				inMaintenance: formData.inMaintenance,
+				isAvailable: formData.isAvailable,
 			})
 		);
 	};
@@ -44,6 +49,7 @@ export default function Properties() {
 				semStartDate: adminData.semStartDate,
 				semEndDate: adminData.semEndDate,
 				inMaintenance: adminData.inMaintenance,
+				isAvailable: adminData.isAvailable,
 			});
 		}
 	}, [dispatch, adminData]);
@@ -88,7 +94,7 @@ export default function Properties() {
 			>
 				<div
 					className={`
-                        col-span-12 bsm:col-span-6 md:col-span-4
+                        col-span-12 bsm:col-span-6 xl:col-span-4
                         py-2
                      `}
 				>
@@ -145,7 +151,7 @@ export default function Properties() {
 				</div>
 				<div
 					className={`
-                        col-span-12 bsm:col-span-6 md:col-span-4
+                        col-span-12 bsm:col-span-6 xl:col-span-4
                         py-2
                      `}
 				>
@@ -203,7 +209,7 @@ export default function Properties() {
 				<div
 					className={`
                     w-auto h-auto
-                    col-span-12 md:col-span-4
+                    col-span-12 md:col-span-3 lg:col-span-3 xl:col-span-2
                     flex items-center
                     gap-x-2
                 `}
@@ -230,6 +236,36 @@ export default function Properties() {
 						In Maintenance
 					</div>
 				</div>
+				<div
+					className={`
+                    w-auto h-auto
+                    col-span-12 md:col-span-3 lg:col-span-2 xl:col-span-2
+                    flex items-center
+                    gap-x-2
+                `}
+				>
+					<div
+						className={`
+                        w-6 h-6
+                        ${
+							formData.isAvailable
+								? "bg-zinc-200"
+								: "border border-zinc-500"
+						}
+                        rounded-lg
+                        cursor-pointer
+                        `}
+						onClick={handleChangeIsAvailable}
+					/>
+					<div
+						className={`
+                        text-base font-bold
+                        text-
+                    `}
+					>
+						Is Available
+					</div>
+				</div>
 				<button
 					className={`
                         w-max
@@ -245,6 +281,7 @@ export default function Properties() {
 					Update Properties
 				</button>
 			</div>
+			
 		</div>
 	);
 }

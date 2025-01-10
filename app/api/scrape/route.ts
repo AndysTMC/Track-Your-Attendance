@@ -12,6 +12,7 @@ import {
 	SERVER_IN_MAINTENANCE_C,
 	ScrapeData,
 	CANT_FETCH_C,
+	SERVER_NOT_AVAILABLE_C,
 } from "@/app/utils/backend";
 import { ScrapingInfo, UserData } from "@/app/utils/hybrid";
 import OPS from "@/app/utils/db_ops";
@@ -65,172 +66,6 @@ const inCoolDownPeriod = (scrapingInfo: ScrapingInfo) => {
 	return false;
 };
 
-// export async function POST(request: Request): Promise<void | Response> {
-// 	let {
-// 		regNo,
-// 		password,
-// 		dKey,
-// 		refetch,
-// 	}: { regNo: string; password: string; dKey: string; refetch: boolean } =
-// 		await request.json();
-// 	const systemData = await OPS.getSystemData();
-// 	if (systemData.inMaintenance) {
-// 		return new Response(JSON.stringify({ error: SERVER_IN_MAINTENANCE_C }), {
-// 			status: 503,
-// 			headers: {
-// 				"Content-Type": "application/json",
-// 			},
-// 		});
-// 	}
-// 	if (!regNo) {
-// 		return new Response(JSON.stringify({ error: REGNO_NOT_PROVIDED_C }), {
-// 			status: 400,
-// 			headers: {
-// 				"Content-Type": "application/json",
-// 			},
-// 		});
-// 	}
-// 	if (password === null && dKey === null) {
-// 		return new Response(
-// 			JSON.stringify({ error: NEITHER_PASSWORD_NOR_DKEY_PROVIDED_C }),
-// 			{
-// 				status: 400,
-// 				headers: {
-// 					"Content-Type": "application/json",
-// 				},
-// 			}
-// 		);
-// 	}
-// 	if (await hasUserInQueue(regNo)) {
-// 		return new Response(
-// 			JSON.stringify({
-// 				inQueue: await inFrontOfUser(regNo),
-// 				inProgress: true,
-// 			}),
-// 			{
-// 				status: 200,
-// 				headers: {
-// 					"Content-Type": "application/json",
-// 				},
-// 			}
-// 		);
-// 	}
-// 	if (isScrapeInProgress(regNo, systemData)) {
-// 		return new Response(
-// 			JSON.stringify({
-// 				inQueue: 0,
-// 				inProgress: true,
-// 			}),
-// 			{
-// 				status: 200,
-// 				headers: {
-// 					"Content-Type": "application/json",
-// 				},
-// 			}
-// 		);
-// 	}
-// 	const user = await OPS.getUser(regNo);
-// 	const [_dKey, _password, _encryptedPassword] = getDKeyAndDEPs(
-// 		dKey,
-// 		password,
-// 		user?.userCredentials.encryptedPassword
-// 	);
-// 	if (user != null) {
-// 		if (refetch) {
-// 			if (!isRefetchPossible(user.userData.scrapingInfo)) {
-// 				return new Response(
-// 					JSON.stringify({ error: REFETCH_LIMIT_REACHED_C }),
-// 					{
-// 						status: 400,
-// 						headers: {
-// 							"Content-Type": "application/json",
-// 						},
-// 					}
-// 				);
-// 			}
-// 		}
-// 		let portal = await authenticateUser(regNo, _password);
-// 		if (portal == null) {
-// 			return new Response(JSON.stringify({ error: INVALID_AUTH_C }), {
-// 				status: 401,
-// 				headers: {
-// 					"Content-Type": "application/json",
-// 				},
-// 			});
-// 		}
-// 		if (!refetch && inCoolDownPeriod(user.userData.scrapingInfo)) {
-// 			await OPS.updateUserEncryptedPassword(regNo, _encryptedPassword);
-// 			const holidays = await OPS.getHolidays();
-// 			const specialWorkingDays = await OPS.getSpecialWorkingDays();
-// 			return new Response(
-// 				JSON.stringify({
-// 					userData: user.userData,
-// 					holidays,
-// 					specialWorkingDays,
-// 					dKey: _dKey,
-// 					regNo: regNo,
-// 				}),
-// 				{
-// 					status: 200,
-// 					headers: {
-// 						"Content-Type": "application/json",
-// 					},
-// 				}
-// 			);
-// 		}
-// 		await OPS.updateUserScrapeProgress(regNo, true);
-// 		user.userCredentials.encryptedPassword = _encryptedPassword;
-// 		await enqueueHelper(
-// 			regNo,
-// 			_encryptedPassword,
-// 			refetch,
-// 			portal,
-// 			user,
-// 			systemData
-// 		);
-// 		return new Response(JSON.stringify({ dKey: _dKey, regNo: regNo }), {
-// 			status: 200,
-// 			headers: {
-// 				"Content-Type": "application/json",
-// 			},
-// 		});
-// 	} else {
-// 		if (password) {
-// 			let portal = await authenticateUser(regNo, password);
-// 			if (portal == null) {
-// 				return new Response(JSON.stringify({ error: INVALID_AUTH_C }), {
-// 					status: 401,
-// 					headers: {
-// 						"Content-Type": "application/json",
-// 					},
-// 				});
-// 			}
-// 			await OPS.updateUserScrapeProgress(regNo, true);
-// 			await enqueueHelper(
-// 				regNo,
-// 				_encryptedPassword,
-// 				refetch,
-// 				portal,
-// 				null,
-// 				systemData
-// 			);
-// 			return new Response(JSON.stringify({ regNo: regNo, dKey: _dKey }), {
-// 				status: 200,
-// 				headers: {
-// 					"Content-Type": "application/json",
-// 				},
-// 			});
-// 		}
-// 		return new Response(JSON.stringify({ error: PLEASE_TRY_AGAIN_C }), {
-// 			status: 500,
-// 			headers: {
-// 				"Content-Type": "application/json",
-// 			},
-// 		});
-// 	}
-// }
-
-// credentials, refetch, portal, user, systemData
 const processScrape = async (
 	credentials: Credentials,
 	refetch: boolean,
@@ -287,6 +122,17 @@ export async function POST(request: Request): Promise<void | Response> {
 	}: { regNo: string; password: string; dKey: string; refetch: boolean } =
 		await request.json();
 	const systemData = await OPS.getSystemData();
+	if(!systemData.isAvailable) {
+		return new Response(
+			JSON.stringify({ error: SERVER_NOT_AVAILABLE_C }),
+			{
+				status: 503,
+				headers: {
+					"Content-Type": "application/json",
+				},
+			}
+		);
+	}
 	if (systemData.inMaintenance) {
 		return new Response(
 			JSON.stringify({ error: SERVER_IN_MAINTENANCE_C }),

@@ -302,4 +302,5 @@ export type FProperties = {
 	semStartDate: string;
 	semEndDate: string;
 	inMaintenance: boolean;
+	isAvailable: boolean;
 };

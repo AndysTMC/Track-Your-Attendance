@@ -1,6 +1,5 @@
 import {
 	addOrRemoveSpecialWorkingDay,
-	clearAdminData,
 } from "@/app/redux/adminSlice";
 import { AppDispatch, RootState } from "@/app/redux/store";
 import { DayOfWeek } from "@/app/utils/frontend";
@@ -33,7 +32,6 @@ export default function SpecialWorkingDays() {
 					replacementDay: formData.replacementDay,
 				})
 			);
-			dispatch(clearAdminData());
 		}
 		setFormData({ date: dayjs().format("YYYY-MM-DD"), replacementDay: -1 });
 	};
@@ -47,7 +45,6 @@ export default function SpecialWorkingDays() {
 						specialWorkingDaysDetails[index].replacementDay,
 				})
 			);
-			dispatch(clearAdminData());
 		}
 	};
 	useEffect(() => {

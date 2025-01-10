@@ -100,6 +100,7 @@ const SpecialWorkingDaySchema = new Schema(
 const SystemStateSchema = new Schema(
 	{
 		inMaintenance: { type: Boolean, default: false },
+		isAvailable: { type: Boolean, default: true },
 		semStartDate: { type: String, default: "" },
 		semEndDate: { type: String, default: "" },
 		adminKey: { type: String, default: "" },
@@ -112,6 +113,7 @@ const SystemStateSchema = new Schema(
 			],
 			default: [],
 		},
+		messages: { type: [String], default: [] },
 	},
 	{ versionKey: false }
 );

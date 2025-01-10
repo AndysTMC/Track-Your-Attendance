@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { Holiday } from "@/app/utils/hybrid";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/app/redux/store";
-import { addOrRemoveHoliday, clearAdminData } from "@/app/redux/adminSlice";
+import { addOrRemoveHoliday } from "@/app/redux/adminSlice";
 import { MdDeleteOutline } from "react-icons/md";
 import { FHoliday } from "@/app/utils/frontend";
 
@@ -30,7 +30,6 @@ export default function Holidays() {
 				name: formData.name,
 			})
 		);
-		dispatch(clearAdminData());
 		setFormData({ date: dayjs().format("YYYY-MM-DD"), name: "" });
 	};
 	const handleRemoveHoliday = (holidayIndex: number) => {
@@ -44,7 +43,6 @@ export default function Holidays() {
 					name: holidaysDetails[holidayIndex].name,
 				})
 			);
-			dispatch(clearAdminData());
 		}
 	};
 	useEffect(() => {

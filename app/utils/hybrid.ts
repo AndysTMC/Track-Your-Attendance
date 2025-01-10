@@ -97,6 +97,8 @@ export type AdminData = {
 	specialWorkingDays: SpecialWorkingDay[];
 	errorAtBackend: boolean;
 	inMaintenance: boolean;
+	isAvailable: boolean;
 	semStartDate: string;
 	semEndDate: string;
+	messages: string[];
 };

@@ -72,3 +72,13 @@ body {
   background-size: 300% 300%;
   animation: gradient-shift 8s infinite, shimmer 3s infinite alternate;
 }
+
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--foreground-rgb), 0.5);
+  border-radius: 50px;
+}

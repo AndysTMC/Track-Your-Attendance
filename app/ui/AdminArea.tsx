@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "../redux/store";
 import { setNavigateToAdminControl, verifyAdmin } from "../redux/adminSlice";
 
-export default function AdminArea() {
+export default function AdminArea({showAnnouncements} : {showAnnouncements: boolean}) {
 	const dispatch = useDispatch<AppDispatch>();
 	const [hoverActive, setHoverActive] = useState(false);
 	const [adminPass, setAdminPass] = useState("");
@@ -28,6 +28,7 @@ export default function AdminArea() {
                 p-4
                 rounded-t-xl
                 ${hoverActive ? "opacity-100" : "opacity-25"}
+				${showAnnouncements ? "hidden" : ""}
                 select-none
             `}
 			onMouseEnter={() => setHoverActive(true)}

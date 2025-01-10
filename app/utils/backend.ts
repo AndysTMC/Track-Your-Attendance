@@ -30,6 +30,7 @@ export const DKEY_CHECK_C = "DKEY CHECK";
 export const UNKNOWN_C = "Unknown";
 export const NA_C = "Not available";
 export const REGNO_NOT_PROVIDED_C = "Registration number not provided";
+export const SERVER_NOT_AVAILABLE_C = "Server is currently shut down";
 export const SERVER_IN_MAINTENANCE_C = "Server is in maintenance";
 export const REFETCH_LIMIT_REACHED_C = "Refetch limit reached";
 export const INVALID_CREDENTIALS_C = "Invalid credentials";
@@ -100,6 +101,7 @@ export type User = {
 };
 
 export type SystemData = {
+	isAvailable: boolean;
 	inMaintenance: boolean;
 	semStartDate: string;
 	semEndDate: string;

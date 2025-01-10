@@ -1,12 +1,11 @@
-import { Holiday } from "@/app/utils/hybrid";
 import OPS from "@/app/utils/db_ops";
 import { verifyAdmin } from "../middleware";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
 	try {
-		const holidays = await OPS.getHolidays();
-		return NextResponse.json({holidays});
+		const messages = await OPS.getMessages();
+		return NextResponse.json({messages});
 	} catch (err: any) {
 		return NextResponse.json({ error: err.message }, { status: 500 });
 	}
@@ -14,7 +13,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
 	try {
-		const { add, date, name } = await request.json();
+		const { add, message } = await request.json();
 		const verifyResponse = await verifyAdmin(request);
 		if (verifyResponse.status != 200) {
 			return NextResponse.json(
@@ -23,18 +22,12 @@ export async function POST(request: NextRequest) {
 			);
 		}
 		if (add) {
-			if (await OPS.hasHoliday(date)) {
-				throw new Error("Holiday already exists");
-			}
-			await OPS.addHoliday(date, name);
+			await OPS.addMessage(message);
 		} else {
-			if (!(await OPS.hasHoliday(date))) {
-				throw new Error("Holiday does not exist");
-			}
-			await OPS.removeHoliday(date);
+			await OPS.removeMessage(message);
 		}
-		const holidays = await OPS.getHolidays();
-		return NextResponse.json({holidays});
+		const messages = await OPS.getMessages();
+		return NextResponse.json({messages});
 	} catch (err: any) {
 		return NextResponse.json({ error: err.message }, { status: 500 });
 	}

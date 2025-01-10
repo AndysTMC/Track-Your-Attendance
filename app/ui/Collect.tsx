@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { teko } from "../fonts";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
@@ -7,6 +7,7 @@ import {
 	clearError,
 	clearLocalStorageData,
 	exit,
+	getMessages,
 	scrape,
 	setData,
 	setError,
@@ -23,7 +24,7 @@ import CollectTopBar from "./CollectTopBar";
 import useEveryTime from "../hooks/EveryTime";
 import { BsInfo } from "react-icons/bs";
 import Link from "next/link";
-import { ThreeDots } from "react-loading-icons"
+import { ThreeDots } from "react-loading-icons";
 
 const getDataLocal = async (): Promise<Object | null> => {
 	try {
@@ -78,7 +79,31 @@ export default function Collect() {
 	const [mode, setMode] = useState("verify");
 	const handleClose = () => dispatch(clearError());
 
-	const fetchUserData = async () => {
+	const [showAnnouncements, setShowAnnouncements] = useState(false);
+
+	// const fetchUserData = async () => {
+	// 	let dKey = localStorage.getItem("TYASRMAPDKEY") ?? null;
+	// 	if (
+	// 		userData ||
+	// 		(errorStatusCode && [400, 401, 500, 503].includes(errorStatusCode))
+	// 	) {
+	// 		setMode("normal");
+	// 		dispatch(clearLocalStorageData());
+	// 		dispatch(clearError());
+	// 	} else {
+	// 		if (dKey == null || errorStatusCode == 200) {
+	// 			dispatch(
+	// 				scrape({ regNo, password, dKey: null, refetch: false })
+	// 			);
+	// 		} else {
+	// 			dispatch(
+	// 				scrape({ regNo, password: null, dKey, refetch: false })
+	// 			);
+	// 		}
+	// 	}
+	// };
+
+	const fetchUserData = useCallback(async () => {
 		let dKey = localStorage.getItem("TYASRMAPDKEY") ?? null;
 		if (
 			userData ||
@@ -98,7 +123,7 @@ export default function Collect() {
 				);
 			}
 		}
-	};
+	}, [userData, errorStatusCode, regNo, password, dispatch]);
 
 	useEffect(() => {
 		if (navigateToAdminControl && mode == "normal") {
@@ -127,8 +152,11 @@ export default function Collect() {
 			setMode("fetch");
 			fetchUserData();
 		}
-		if (errorStatusCode !== null && [400, 401, 500, 503].includes(errorStatusCode)) {
-			setMode("normal")
+		if (
+			errorStatusCode !== null &&
+			[400, 401, 500, 503].includes(errorStatusCode)
+		) {
+			setMode("normal");
 		}
 	}, [fetchInProgress, errorStatusCode, fetchUserData]);
 
@@ -156,8 +184,17 @@ export default function Collect() {
 		}
 		dispatch(setFetchInProgress(true));
 	};
+
 	return (
-		<div className="w-full h-full min-h-max flex flex-col items-center justify-center collect-bg overflow-hidden">
+		<div
+			className={`w-full h-full min-h-max flex flex-col items-center justify-center ${showAnnouncements ? 'bg-black' : 'collect-bg'} overflow-hidden`}
+		>
+			{mode != "verify" ? (
+				<CollectTopBar
+					showAnnouncements={showAnnouncements}
+					setShowAnnouncements={setShowAnnouncements}
+				/>
+			) : null}
 			<div
 				className={`
                         max-h-full overflow-y-auto
@@ -167,9 +204,9 @@ export default function Collect() {
                         select-none
                         py-20
                         no-scrollbar
+						${showAnnouncements ? "pointer-events-none opacity-5" : "pointer-events-auto"}
                 `}
 			>
-				{mode != "verify" ? <CollectTopBar /> : null}
 				<div className="w-full flex items-center justify-center p-4">
 					<h1
 						className={`
@@ -314,8 +351,10 @@ export default function Collect() {
 				) : mode == "fetch" ? (
 					<div className="w-full p-2 bsm:p-8 flex flex-row items-center justify-center text-base text-white bsm:text-xl gap-x-2 select-none">
 						<div className="h-10 flex flex-row items-center gap-x-2 animate-pulse">
-							<ThreeDots 
-								stroke="#98ff98" strokeOpacity={.125} speed={.75}
+							<ThreeDots
+								stroke="#98ff98"
+								strokeOpacity={0.125}
+								speed={0.75}
 								className={`
 									w-8 bsm:w-10
 									h-8 bsm:h-10
@@ -343,7 +382,7 @@ export default function Collect() {
 				anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
 				color="white"
 			/>
-			{mode == "normal" ? <AdminArea /> : null}
+			{mode == "normal" ? <AdminArea showAnnouncements={showAnnouncements} /> : null}
 		</div>
 	);
 }

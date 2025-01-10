@@ -107,6 +107,7 @@ class OPS {
 		await connectDB();
 		const systemState = await SystemStateModel.findOne();
 		return {
+			isAvailable: systemState.isAvailable,
 			inMaintenance: systemState.inMaintenance,
 			semStartDate: systemState.semStartDate,
 			semEndDate: systemState.semEndDate,
@@ -196,6 +197,22 @@ class OPS {
 		return doc.inMaintenance;
 	}
 
+	static async getMessages(): Promise<string[]> {
+		await connectDB();
+		const doc = await SystemStateModel.findOne({});
+		return doc.messages;
+	}
+
+	static async addMessage(message: string): Promise<void> {
+		await connectDB();
+		await SystemStateModel.updateOne({}, { $push: { messages: message } });
+	}
+
+	static async removeMessage(message: string): Promise<void> {
+		await connectDB();
+		await SystemStateModel.updateOne({}, { $pull: { messages: message } });
+	}
+
 	static async setAdminKey(key: string): Promise<void> {
 		await connectDB();
 		await SystemStateModel.updateOne({}, { $set: { adminKey: key } });
@@ -218,6 +235,8 @@ class OPS {
 		const semEndDate = systemState.semEndDate;
 		const errorAtBackend = systemState.errorAtBackend;
 		const inMaintenance = systemState.inMaintenance;
+		const isAvailable = systemState.isAvailable;
+		const messages = systemState.messages;
 		return {
 			holidays,
 			specialWorkingDays,
@@ -225,6 +244,8 @@ class OPS {
 			semEndDate,
 			errorAtBackend,
 			inMaintenance,
+			isAvailable,
+			messages,
 		};
 	}
 
@@ -232,17 +253,20 @@ class OPS {
 		semStartDate,
 		semEndDate,
 		inMaintenance,
+		isAvailable,
 	}: {
 		semStartDate: string;
 		semEndDate: string;
 		inMaintenance: boolean;
+		isAvailable: boolean;
 	}): Promise<void> {
 		await connectDB();
 		await SystemStateModel.updateOne(
 			{},
-			{ $set: { semStartDate, semEndDate, inMaintenance } }
+			{ $set: { semStartDate, semEndDate, inMaintenance, isAvailable } }
 		);
 	}
+
 }
 
 export default OPS;

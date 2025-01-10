@@ -2,14 +2,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { Holiday, SpecialWorkingDay, UserData } from "@/app/utils/hybrid";
-import { generateChecksum } from "@/app/utils/hybrid";
-import { clear } from "console";
 
 interface UserState {
 	userData: UserData | null;
 	error: string | null;
 	errorStatusCode: number | null;
 	holidays: Holiday[];
+	messages: string[];
+	messagesReceived: boolean;
 	specialWorkingDays: SpecialWorkingDay[];
 	fetchInProgress: boolean;
 }
@@ -20,11 +20,13 @@ const initialState: UserState = {
 	errorStatusCode: null,
 	fetchInProgress: false,
 	holidays: [],
+	messages: [],
+	messagesReceived: false,
 	specialWorkingDays: [],
 };
 
 export const scrape = createAsyncThunk(
-	"",
+	"scrape",
 	async (
 		{
 			regNo,
@@ -49,6 +51,22 @@ export const scrape = createAsyncThunk(
 					},
 				}
 			);
+			return { ...response.data, status: response.status };
+		} catch (error: any) {
+			return rejectWithValue({
+				error: error.response.data.error,
+				status: error.response.status,
+			});
+		}
+	}
+);
+
+
+export const getMessages = createAsyncThunk(
+	"getMessages",
+	async (_, { rejectWithValue }) => {
+		try {
+			const response = await axios.get("/api/admin/messages");
 			return { ...response.data, status: response.status };
 		} catch (error: any) {
 			return rejectWithValue({
@@ -117,6 +135,19 @@ const userSlice = createSlice({
 				state.errorStatusCode = (
 					action.payload as { status: number }
 				).status;
+			})
+			.addCase(getMessages.fulfilled, (state, action) => {
+				console.log(action.payload);
+				state.messages = action.payload.messages;
+				state.messagesReceived = true;
+				localStorage.setItem("TYASRMAPANNO", JSON.stringify(action.payload.messages));
+			})
+			.addCase(getMessages.pending, (state) => {
+				state.messages = [];
+			})
+			.addCase(getMessages.rejected, (state, action) => {
+				state.error = (action.payload as { error: string }).error;
+				state.errorStatusCode = (action.payload as { status: number }).status;
 			});
 	},
 });

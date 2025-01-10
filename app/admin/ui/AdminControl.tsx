@@ -4,20 +4,24 @@ import Holidays from "./Holidays";
 import SpecialWorkingDays from "./SpecialWorkingDays";
 import { AppDispatch, RootState } from "@/app/redux/store";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { clearAdminError, fetchAdminData } from "@/app/redux/adminSlice";
 import useEveryTime from "@/app/hooks/EveryTime";
 import Properties from "./Properties";
 import { Snackbar } from "@mui/material";
+import { AnimatePresence, motion } from "framer-motion";
+import Messages from "./Messages";
 
 export default function AdminControl() {
 	const dispatch = useDispatch<AppDispatch>();
 	const {
 		adminData,
+		isAdminStateUpdating,
 		adminError: error,
 		adminErrorStatusCode: errorStatusCode,
 	} = useSelector((state: RootState) => state.admin);
 	const router = useRouter();
+	const [isAnimating, setIsAnimating] = useState(false);
 	const getAdminData = () => {
 		if (!adminData) dispatch(fetchAdminData());
 	};
@@ -30,6 +34,14 @@ export default function AdminControl() {
 		router.replace("/");
 	};
 	const handleClose = () => dispatch(clearAdminError());
+	useEffect(() => {
+		if (isAdminStateUpdating) {
+			setIsAnimating(true);
+			setTimeout(() => {
+				setIsAnimating(false);
+			}, 1000);
+		}
+	}, [isAdminStateUpdating]);
 	return (
 		<div
 			className={`
@@ -83,7 +95,27 @@ export default function AdminControl() {
 				<Holidays />
 				<SpecialWorkingDays />
 				<Properties />
+				<Messages />
 			</div>
+
+			<AnimatePresence>
+				{isAnimating && (
+					<motion.div
+						className="w-full py-1 bg-white flex items-center justify-center text-balance fixed bottom-0 z-10 pointer-events-none"
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: 20 }}
+						transition={{ duration: 0.5 }}
+						style={{
+							visibility: isAnimating ? "visible" : "hidden",
+						}}
+					>
+						<p className="text-black text-sm font-black text-balance">
+							•••Updating Information•••
+						</p>
+					</motion.div>
+				)}
+			</AnimatePresence>
 			<Snackbar
 				open={error != null}
 				autoHideDuration={5000}
