@@ -51,3 +51,22 @@ For more information, please refer to the [LICENSE](LICENSE) file included in th
 ## Contributing
 
 We welcome contributions from the community. Please read our [contributing guidelines](CONTRIBUTING.md) and [code of conduct](CODE_OF_CONDUCT.md) before getting started.
+
+## Disclaimer
+
+**Legal & Ethical Compliance:**
+
+This project is developed in full compliance with all applicable legal standards. Before using the application, users are required to accept our comprehensive **[Terms of Use](TERMS_OF_USE.md)** and **[Privacy Policy](PRIVACY_POLICY.md)**, which clearly outline the rules and conditions of service. By agreeing, users acknowledge and consent to these terms.
+
+**Purpose & Ethical Stance:**
+
+This application is intended solely to provide SRMAP students with an efficient tool for managing their attendance. It is designed to enhance student productivity and organization, and is not intended to violate or circumvent any policies set by SRM-AP. We are committed to ethical data handling practices and only collect and utilize data for purposes explicitly outlined in our Terms of Use and Privacy Policy.
+
+**User Choice & Responsibility:**
+
+Use of this application is entirely voluntary. Users are never required to use this tool. We provide it as a beneficial resource to aid students in effectively managing their academic schedules. By choosing to use this application, users acknowledge and agree to the Terms of Use and Privacy Policy.
+
+
+## Contact
+
+For any inquiries or concerns, please reach out to us via the [TYA Support Discord server](https://discord.gg/RDC3bZbZKc).
