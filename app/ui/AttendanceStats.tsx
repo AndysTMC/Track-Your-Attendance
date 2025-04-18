@@ -9,6 +9,7 @@ import {
 	getPercent,
 	getPrettierAttendanceStats,
 	getSkipsLeft,
+	getSessionsRemain,
 	getODMLConsidered,
 	getODMLPercent,
 	getSessionsToHit75,
@@ -271,8 +272,7 @@ export default function AttendanceStats() {
 											lg:flex justify-center items-center
 										`}
 										>
-											{attendance.total -
-												attendance.totalScheduled}
+											{getSessionsRemain(attendance)}
 										</div>
 										<div
 											className={`

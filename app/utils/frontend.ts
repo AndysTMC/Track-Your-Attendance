@@ -192,7 +192,7 @@ export const getPercent = (attendance: Attendance): number => {
 };
 
 export const getODMLConsidered = (attendance: Attendance): number => {
-	const maxODML = Math.ceil(attendance.total * 0.15);
+	const maxODML = Math.ceil(attendance.totalScheduled * 0.15);
 	const ODMLTaken = attendance.odml;
 	return Math.min(ODMLTaken, maxODML);
 };
@@ -207,7 +207,7 @@ export const getODMLPercent = (attendance: Attendance): number => {
 
 export const getSkipsLeft = (attendance: Attendance): number => {
 	const absent = attendance.absent;
-	const total = attendance.total;
+	const total = attendance.totalScheduled;
  	const notEntered = attendance.notEntered;
 	return Math.max(0, Math.floor(0.25 * total - absent - notEntered));
 };
@@ -252,6 +252,16 @@ export const getPrettierSchedule = (sessions: Array<FSession>): string => {
 		result += "Session-" + (i + 1) + "\n";
 		result += getPrettierSessions(sessions[i]) + "\n\n";
 	}
+	return result;
+};
+
+
+export const getSessionsRemain = (attendance: Attendance): number => {
+	const present = attendance.present;
+	const absent = attendance.absent;
+	const sessionsRemain = attendance.totalScheduled;
+	const total = present + absent;
+	const result = sessionsRemain - total
 	return result;
 };
 

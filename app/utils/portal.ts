@@ -406,34 +406,32 @@ const extractAttendancePage = async (
 		const attendancePage = await getPage(portal, pageId);
 		const $ = cheerio.load(attendancePage);
 		const attendanceInfo: Array<Attendance> = [];
-		$("tr")
-			.filter((_: any, el: any) => $(el).find("td").length === 10)
-			.each((_: any, el: any) => {
+		$("table#tblSubjectWiseAttendance tr")
+			.filter((_, el) => $(el).find("td").length === 9)
+			.each((_, el) => {
 				const [
-					courseCode,
-					courseName,
-					totalScheduled,
+					subject_code,
+					subject_name,
+					classes_conducted,
 					present,
 					absent,
-					notEntered,
-					presentPercent,
-					odml,
-					odmlAppr,
-					odmlPercent,
+					present_percentage,
+					od_ml_taken,
+					od_ml_percentage,
 				] = $(el)
 					.find("td")
-					.map((_: any, el: any) => $(el).text().trim())
+					.map((_, el) => $(el).text().trim())
 					.get();
 				attendanceInfo.push({
-					courseCode,
-					present: parseInt(present ?? 0),
-					absent: parseInt(absent ?? 0),
-					totalScheduled: parseInt(totalScheduled ?? 0),
+					courseCode: subject_code,
+					present: parseInt(present ?? "0"),
+					absent: parseInt(absent ?? "0"),
+					totalScheduled: parseInt(classes_conducted ?? "0"),
 					total: -1,
-					notEntered: parseInt(notEntered ?? 0),
-					presentPercent: parseFloat(presentPercent ?? 0),
-					odml: parseInt(odml ?? 0),
-					odmlPercent: parseFloat(odmlPercent ?? 0),
+					notEntered: 0,
+					presentPercent: parseFloat(present_percentage ?? "0"),
+					odml: parseInt(od_ml_taken ?? "0"),
+					odmlPercent: parseFloat(od_ml_percentage ?? "0")
 				});
 			});
 		return attendanceInfo;
@@ -443,6 +441,7 @@ const extractAttendancePage = async (
 		);
 	}
 };
+
 const setTotalInAttendance = async (
 	timetableInfo: Timetable,
 	attendanceInfo: Array<Attendance>,
