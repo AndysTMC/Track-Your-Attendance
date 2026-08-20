@@ -1,0 +1,78 @@
+{
+    "version": 1,
+    "name": "Track Your Attendance",
+    "tagline": "SRM-AP parent-portal timetable and attendance, cached and explained",
+    "description": "TYA is a Next.js PWA for SRM University-AP students. It logs into the official Parent Corner portal with the student's registration number and password, solves the login captcha through a separate Tesseract service, and scrapes profile, weekly timetable, course list, and subject-wise attendance into MongoDB. The app then shows identity, live ongoing and upcoming sessions, a swipeable weekly schedule, courses, and derived stats such as usable OD/ML, skips left, remaining sessions, and classes needed to reach 75 percent, using operator-maintained holidays, special working days, and semester dates.",
+    "year": "2024",
+    "tags": [
+        "attendance",
+        "student portal",
+        "SRM-AP",
+        "web scraping",
+        "PWA",
+        "academic calendar"
+    ],
+    "skills": [
+        "TypeScript",
+        "JavaScript",
+        "Next.js",
+        "React",
+        "Redux Toolkit",
+        "Tailwind CSS",
+        "Material UI",
+        "MongoDB",
+        "Mongoose",
+        "Cheerio",
+        "Express",
+        "Tesseract.js",
+        "Node.js",
+        "Vercel",
+        "Render",
+        "PWA"
+    ],
+    "highlights": [
+        "Scrapes SRM-AP Parent Corner (JSESSIONID, captcha OCR, Cheerio pages 1/3/10) into MongoDB user documents keyed by registration number",
+        "Derives remaining sessions from timetable times weekday counts, subtracting holidays and adding special working days over the admin-set semester window",
+        "Live ongoing and upcoming session view with a per-second countdown, plus skip-left and sessions-to-75 percent math",
+        "Installable PWA: next-pwa, Web App Manifest, beforeinstallprompt, and device-specific iOS splash screens",
+        "Admin console for holidays, special working days, semester dates, maintenance, availability, and announcements, gated by ADMIN_PASS and an HttpOnly adminKey cookie",
+        "Deployed web app at https://track-your-attendance-delta.vercel.app (Vercel HTTP 200)"
+    ],
+    "liveUrl": "https://track-your-attendance-delta.vercel.app",
+    "story": {
+        "why": "SRM-AP students otherwise have to log into Parent Corner for a static timetable and raw present/absent counts. TYA caches that scrape and adds a live class view plus holiday-aware remaining-session and 75 percent math.",
+        "problem": "The official parent portal sits behind captcha login, does not show what is on now, and does not compute skips left, remaining sessions after holidays and special working days, or how many consecutive classes are needed to hit 75 percent.",
+        "challenges": [
+            "Parent Corner login needs a JSESSIONID plus an image captcha; web-app/app/utils/portal.ts POSTs the PNG to a separate Tesseract service with a 3 second timeout",
+            "Serverless filesystem: captcha PNG is written to /tmp in production and ./captcha.png locally (portal.ts)",
+            "HTML scrape is coupled to portal table shapes and page IDs 1, 3, and 10 (extractProfilePage, extractAttendancePage, extractTimetablePage)",
+            "Portal load is rate-limited with MAX_REFETCH_LIMIT, same-day COOLDOWN_TIME, and MAX_SCRAPE_RETRY (web-app/app/api/scrape/route.ts)",
+            "Portal password is stored as a character-substitution cipher; the permutation key lives in localStorage as TYASRMAPDKEY (web-app/app/utils/backend.ts, userSlice.ts)",
+            "Attendance totals are derived from timetable times weekday counts plus holidays and special working days, not from a remaining-class field on the portal (setTotalInAttendance); notEntered is hardcoded to 0",
+            "In-memory Queue class, scrapesInProgress ops, and Bull/Redis packages remain after the queue was removed (backend.ts, db_ops.ts, web-app/package.json); no test suite despite CONTRIBUTING.md"
+        ],
+        "designDecisions": [
+            "OCR is a separate Express plus Tesseract.js service in text-extract-api/, called at https://tya-text-extract.onrender.com/extract rather than running Tesseract inside Next.js",
+            "Scraped users are upserted in MongoDB by registration number; a cooldown hit returns the cached document instead of re-scraping (scrape/route.ts, configs/models.ts)",
+            "Client restores a session by posting a SHA-256 checksum of userData plus holidays plus special working days to /api/verify (Collect.tsx, hybrid.ts)",
+            "Academic calendar (holidays, special working days, semester bounds, maintenance) is operator-maintained in MongoDB, not scraped (admin API routes and admin/ui)",
+            "next-pwa writes to public/, with Web App Manifest and a large apple-touch-startup-image set in app/layout.tsx",
+            "Mongoose connection is cached for serverless (app/configs/db.ts); /admin is gated by middleware that round-trips the adminKey cookie to /api/admin/key-verify",
+            "Licensed AGPL-3.0 (LICENSE)"
+        ]
+    },
+    "future": {
+        "next": "Replace the substitution-cipher credential store with real encryption, as PRIVACY_POLICY.md already promises further protection, and drop the unused queue, Redis, and BullMQ leftovers.",
+        "roadmap": [
+            "Additional user data protection measures called out in PRIVACY_POLICY.md section 6",
+            "Unit tests required by CONTRIBUTING.md; text-extract-api test script is still a stub",
+            "Remove unused Queue class, Bull/BullMQ/ioredis/redis/@upstash/redis dependencies, empty miscSlice.ts, and scrapesInProgress ops that scrape/route.ts never calls",
+            "Populate attendance.notEntered from the portal table instead of hardcoding 0 in extractAttendancePage"
+        ],
+        "upcomingFeatures": [],
+        "ideas": [
+            "Restore a scrape job queue; Queue, scrapesInProgress, and BullMQ remain in the tree after the October 2024 removal",
+            "Parse not-entered attendance from Parent Corner instead of treating it as always zero"
+        ]
+    }
+}
